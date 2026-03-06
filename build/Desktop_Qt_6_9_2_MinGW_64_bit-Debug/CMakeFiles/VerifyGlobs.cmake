@@ -47,6 +47,10 @@ set(OLD_GLOB
   "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/UYX5XTB5RZ/moc_numkeyboard.cpp"
   "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/mocs_compilation.cpp"
   "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/main.cpp"
+  "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/scr/CalcLogger.cpp"
+  "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/scr/Infinitesimalrechnung.cpp"
+  "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/scr/Trigonometry.cpp"
+  "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/scr/algorithm.cpp"
   "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/ui/mosandbjt.cpp"
   "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/ui/numkeyboard.cpp"
   )
@@ -70,6 +74,8 @@ set(OLD_GLOB
   "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/include/ui/ui_mosandbjt.h"
   "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/include/ui/ui_numkeyboard.h"
   "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/moc_predefs.h"
+  "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/include/BJT_interface.h"
+  "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/include/MOS_interface.h"
   "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/ui/mosandbjt.h"
   "D:/for work/temp/workshorp/PC/Qt/MOSandBJT/ui/numkeyboard.h"
   )

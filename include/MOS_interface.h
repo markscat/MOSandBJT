@@ -1,0 +1,4 @@
+#ifndef MOS_INTERFACE_H
+#define MOS_INTERFACE_H
+
+#endif // MOS_INTERFACE_H

@@ -1,101 +1,15 @@
 # ninja log v6
 2213	2420	7944833529659364	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/6WJNPILU4A/qrc_resource.cpp	7f57f7bbaf30bdd0
-10	123	7944834119322153	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	d123f20a696a83a9
-179	2192	7944833525713773	MOSandBJT_autogen/timestamp	308a551a5a229faa
-2213	2420	7944833529659364	MOSandBJT_autogen/6WJNPILU4A/qrc_resource.cpp	7f57f7bbaf30bdd0
-179	2192	7944833525713773	MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-179	2192	7944833525713773	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/timestamp	308a551a5a229faa
-179	2192	7944833525713773	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-2472	2819	7944833530466811	CMakeFiles/MOSandBJT.dir/MOSandBJT_autogen/6WJNPILU4A/qrc_resource.cpp.obj	342cbfee633d7628
-2460	9559	7944833530349393	CMakeFiles/MOSandBJT.dir/ui/numkeyboard.cpp.obj	80ea2929ed3c3e23
-123	1866	7944834136421112	build.ninja	c7009521c25de220
-17	249	7944834137534842	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	d123f20a696a83a9
-270	3830	7944834166424113	MOSandBJT_autogen/timestamp	308a551a5a229faa
-270	3830	7944834166424113	MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-270	3830	7944834166424113	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/timestamp	308a551a5a229faa
-270	3830	7944834166424113	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-3852	19406	7944834175898444	CMakeFiles/MOSandBJT.dir/ui/numkeyboard.cpp.obj	80ea2929ed3c3e23
-20	276	7944835055449949	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	d123f20a696a83a9
-302	1815	7944835072208706	MOSandBJT_autogen/timestamp	308a551a5a229faa
-302	1815	7944835072208706	MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-302	1815	7944835072208706	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/timestamp	308a551a5a229faa
-302	1815	7944835072208706	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-1816	6562	7944835073412157	CMakeFiles/MOSandBJT.dir/MOSandBJT_autogen/mocs_compilation.cpp.obj	85bb7247d61c738d
-1823	6682	7944835073485794	CMakeFiles/MOSandBJT.dir/ui/mosandbjt.cpp.obj	b1784cf7e44d804b
-1819	6699	7944835073440069	CMakeFiles/MOSandBJT.dir/main.cpp.obj	e78cd1f6c21172bc
-1828	7624	7944835073527625	CMakeFiles/MOSandBJT.dir/ui/numkeyboard.cpp.obj	80ea2929ed3c3e23
-16	180	7944838376989378	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	d123f20a696a83a9
-196	1963	7944838393428849	MOSandBJT_autogen/timestamp	308a551a5a229faa
-196	1963	7944838393428849	MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-196	1963	7944838393428849	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/timestamp	308a551a5a229faa
-196	1963	7944838393428849	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-1964	8841	7944838396461469	CMakeFiles/MOSandBJT.dir/MOSandBJT_autogen/mocs_compilation.cpp.obj	85bb7247d61c738d
-1974	9016	7944838396563745	CMakeFiles/MOSandBJT.dir/ui/mosandbjt.cpp.obj	b1784cf7e44d804b
-1969	9205	7944838396513883	CMakeFiles/MOSandBJT.dir/main.cpp.obj	e78cd1f6c21172bc
-1979	10550	7944838396615801	CMakeFiles/MOSandBJT.dir/ui/numkeyboard.cpp.obj	80ea2929ed3c3e23
-10550	11123	7944838482320290	MOSandBJT.exe	9ecb82f6f307fea8
-22	282	7944848666744917	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	d123f20a696a83a9
-311	2436	7944848688922996	MOSandBJT_autogen/timestamp	308a551a5a229faa
-311	2436	7944848688922996	MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-311	2436	7944848688922996	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/timestamp	308a551a5a229faa
-311	2436	7944848688922996	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-2443	11075	7944848690950441	CMakeFiles/MOSandBJT.dir/main.cpp.obj	e78cd1f6c21172bc
-2438	11114	7944848690901239	CMakeFiles/MOSandBJT.dir/MOSandBJT_autogen/mocs_compilation.cpp.obj	85bb7247d61c738d
-2448	11528	7944848691007809	CMakeFiles/MOSandBJT.dir/ui/mosandbjt.cpp.obj	b1784cf7e44d804b
-2453	13283	7944848691051479	CMakeFiles/MOSandBJT.dir/ui/numkeyboard.cpp.obj	80ea2929ed3c3e23
-13283	14038	7944848799356971	MOSandBJT.exe	9ecb82f6f307fea8
-17	329	7944848860052580	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	d123f20a696a83a9
-355	810	7944848863436735	MOSandBJT_autogen/timestamp	308a551a5a229faa
-355	810	7944848863436735	MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-355	810	7944848863436735	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/timestamp	308a551a5a229faa
-355	810	7944848863436735	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-811	6880	7944848867992511	CMakeFiles/MOSandBJT.dir/ui/mosandbjt.cpp.obj	b1784cf7e44d804b
-816	8662	7944848868046086	CMakeFiles/MOSandBJT.dir/ui/numkeyboard.cpp.obj	80ea2929ed3c3e23
-8662	9393	7944848946505178	MOSandBJT.exe	9ecb82f6f307fea8
-19	202	7944851396753435	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	d123f20a696a83a9
-217	1753	7944851412404123	MOSandBJT_autogen/timestamp	308a551a5a229faa
-217	1753	7944851412404123	MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-217	1753	7944851412404123	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/timestamp	308a551a5a229faa
-217	1753	7944851412404123	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-1758	8709	7944851414142870	CMakeFiles/MOSandBJT.dir/main.cpp.obj	e78cd1f6c21172bc
-1754	8976	7944851414095749	CMakeFiles/MOSandBJT.dir/MOSandBJT_autogen/mocs_compilation.cpp.obj	85bb7247d61c738d
-1763	9374	7944851414189672	CMakeFiles/MOSandBJT.dir/ui/mosandbjt.cpp.obj	b1784cf7e44d804b
-1767	11311	7944851414234198	CMakeFiles/MOSandBJT.dir/ui/numkeyboard.cpp.obj	80ea2929ed3c3e23
-11311	12098	7944851509680141	MOSandBJT.exe	9ecb82f6f307fea8
-9	118	7944854136598111	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	d123f20a696a83a9
-129	335	7944854137802407	MOSandBJT_autogen/timestamp	308a551a5a229faa
-129	335	7944854137802407	MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-129	335	7944854137802407	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/timestamp	308a551a5a229faa
-129	335	7944854137802407	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-336	6415	7944854139863175	CMakeFiles/MOSandBJT.dir/ui/mosandbjt.cpp.obj	b1784cf7e44d804b
-339	7728	7944854139897859	CMakeFiles/MOSandBJT.dir/ui/numkeyboard.cpp.obj	80ea2929ed3c3e23
-7729	8381	7944854213799230	MOSandBJT.exe	9ecb82f6f307fea8
-16	242	7944856976124239	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	d123f20a696a83a9
-267	1842	7944856992680009	MOSandBJT_autogen/timestamp	308a551a5a229faa
-267	1842	7944856992680009	MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-267	1842	7944856992680009	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/timestamp	308a551a5a229faa
-267	1842	7944856992680009	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-1844	8030	7944856994400010	CMakeFiles/MOSandBJT.dir/MOSandBJT_autogen/mocs_compilation.cpp.obj	85bb7247d61c738d
-1849	8408	7944856994451269	CMakeFiles/MOSandBJT.dir/main.cpp.obj	e78cd1f6c21172bc
-1854	8766	7944856994495578	CMakeFiles/MOSandBJT.dir/ui/mosandbjt.cpp.obj	b1784cf7e44d804b
-1858	10015	7944856994545836	CMakeFiles/MOSandBJT.dir/ui/numkeyboard.cpp.obj	80ea2929ed3c3e23
-10016	10669	7944857076120392	MOSandBJT.exe	9ecb82f6f307fea8
-7	110	7944857394467611	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	d123f20a696a83a9
-12	164	7944857967977967	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	d123f20a696a83a9
-177	473	7944857969631963	MOSandBJT_autogen/timestamp	308a551a5a229faa
-177	473	7944857969631963	MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-177	473	7944857969631963	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/timestamp	308a551a5a229faa
-177	473	7944857969631963	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-474	5249	7944857972597904	CMakeFiles/MOSandBJT.dir/ui/mosandbjt.cpp.obj	b1784cf7e44d804b
-476	6185	7944857972628512	CMakeFiles/MOSandBJT.dir/ui/numkeyboard.cpp.obj	80ea2929ed3c3e23
-6185	6700	7944858029716075	MOSandBJT.exe	9ecb82f6f307fea8
 20	249	7944858804542617	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	d123f20a696a83a9
 273	1839	7944858821129052	MOSandBJT_autogen/timestamp	308a551a5a229faa
+1840	10061	7944858822764101	CMakeFiles/MOSandBJT.dir/MOSandBJT_autogen/mocs_compilation.cpp.obj	85bb7247d61c738d
+2213	2420	7944833529659364	MOSandBJT_autogen/6WJNPILU4A/qrc_resource.cpp	7f57f7bbaf30bdd0
 273	1839	7944858821129052	MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
 273	1839	7944858821129052	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/timestamp	308a551a5a229faa
 273	1839	7944858821129052	D:/for work/temp/workshorp/PC/Qt/MOSandBJT/build/Desktop_Qt_6_9_2_MinGW_64_bit-Debug/MOSandBJT_autogen/mocs_compilation.cpp	308a551a5a229faa
-1840	10061	7944858822764101	CMakeFiles/MOSandBJT.dir/MOSandBJT_autogen/mocs_compilation.cpp.obj	85bb7247d61c738d
-1844	10084	7944858822808106	CMakeFiles/MOSandBJT.dir/main.cpp.obj	e78cd1f6c21172bc
-1849	10943	7944858822852272	CMakeFiles/MOSandBJT.dir/ui/mosandbjt.cpp.obj	b1784cf7e44d804b
+2472	2819	7944833530466811	CMakeFiles/MOSandBJT.dir/MOSandBJT_autogen/6WJNPILU4A/qrc_resource.cpp.obj	342cbfee633d7628
 1854	13339	7944858822902139	CMakeFiles/MOSandBJT.dir/ui/numkeyboard.cpp.obj	80ea2929ed3c3e23
+123	1866	7944890268243686	build.ninja	c7009521c25de220
+1849	10943	7944858822852272	CMakeFiles/MOSandBJT.dir/ui/mosandbjt.cpp.obj	b1784cf7e44d804b
+1844	10084	7944858822808106	CMakeFiles/MOSandBJT.dir/main.cpp.obj	e78cd1f6c21172bc
 13339	14121	7944858937723391	MOSandBJT.exe	9ecb82f6f307fea8
