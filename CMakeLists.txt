@@ -28,8 +28,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         ui/numkeyboard.cpp ui/numkeyboard.h ui/numkeyboard.ui
         resource/resource.qrc
-        include/BJT_interface.h
-        include/MOS_interface.h
+        include/bjt.h
+        include/mosfet.h
+        scr/mosfet.cpp
+        include/transistor.h
+        include/curveexporter.h
+        scr/curveexporter.cpp
 
     )
 # Define target properties for Android with Qt 6 as:
