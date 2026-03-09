@@ -2,19 +2,32 @@
 #include "include/mosfet.h"
 #include "include/curveexporter.h"
 
+#define TEST_MOSFET
+#ifdef TEST_MOSFET
+#include <iostream>
+#include <vector>
+#else
+
 #include <QApplication>
 #include <QLocale>
 #include <QTranslator>
-
+#endif
 int main(int argc, char *argv[])
 {
 
 #define TEST_MOSFET
 #ifdef TEST_MOSFET
+
     MOSFET mos;
+
+    // 加入這個，編譯器會告訴你哪個沒實作
+    //MOSFET* p = new MOSFET();  // 同樣會出錯，但訊息可能更清楚
     /*
-     * main.cpp:12:12: Variable type 'MOSFET' is an abstract class
-       transistor.h:34:30: unimplemented pure virtual method 'transferCurve' in 'MOSFET'
+D:\for work\temp\workshorp\PC\Qt\MOSandBJT\main.cpp:21: error: cannot declare variable 'mos' to be of abstract type 'MOSFET'
+D:/for work/temp/workshorp/PC/Qt/MOSandBJT/main.cpp: In function 'int qMain(int, char**)':
+D:/for work/temp/workshorp/PC/Qt/MOSandBJT/main.cpp:14:12: error: cannot declare variable 'mos' to be of abstract type 'MOSFET'
+   14 |     MOSFET mos;
+      |            ^~~
 */
     mos.setParameter("Vth", 2.0);
     mos.setParameter("Kn", 0.1);

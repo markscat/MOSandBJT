@@ -78,6 +78,17 @@ void MOSandBJT::onNumpadClosed()
     numpadWindow = nullptr;
 }
 
+/*
+// 在 ui/mainwindow.cpp 裡
+std::vector<Point> corePoints = mos.outputCurve(3.5);
+QVector<QPointF> qtPoints;
+for (const auto& p : corePoints) {
+    qtPoints.append(QPointF(p.x, p.y));
+}
+// 再用 qtPoints 畫圖
+*/
+
+
 MOSandBJT::~MOSandBJT()
 {
     delete ui;

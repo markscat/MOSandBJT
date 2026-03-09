@@ -13,6 +13,7 @@
  * 2. 轉移特性（Transfer Characteristics）：Id vs Vgs
  * Id = Kn × (Vgs - Vth)²
  * 問題：Kn 從哪裡來？
+ *
  * 規格書不會直接給你 Kn，但可以用有給的參數反推：
  *
  * 方法 A：用 Rds(on) 反推
@@ -28,11 +29,25 @@
  * 有些規格書會給在某個 Vgs 和 Vds 下的 Id
  * 用 Id = Kn × (Vgs - Vth)² 反推 Kn
  *
+ *3. λ（通道調變係數）怎麼來？
+ * λ 影響飽和區曲線的斜率，規格書通常沒有，但有幾種方式：
+ * 方法 A：用輸出電阻 ro 反推
+ * ro = 1 / (λ × Id)
+ * 如果規格書有給輸出電阻（很少），可以反推
  *
+ * 方法 B：直接忽略（λ = 0）
+ * 初學者或粗略計算，λ 設為 0 也沒關係
+ * 曲線在飽和區就是平的
+ *
+ * 方法 C：用經驗值
+ * 小訊號 MOSFET：λ ≈ 0.01 ~ 0.1
+ * 功率 MOSFET：λ ≈ 0.001 ~ 0.01
  */
 
 
 #include "transistor.h"
+#include <string>
+#include <vector>
 
 class MOSFET : public Transistor
 {
@@ -40,35 +55,61 @@ public:
     MOSFET();
     ~MOSFET() override;
 
-    // 型號與類型
-    QString type() const override;
-    QString subtype() const;  // N-channel 或 P-channel
 
-    // 參數設定與讀取
-    void setParameter(const QString& name, double value) override;
-    double getParameter(const QString& name) const override;
-    QStringList paramList() const override;
+    // 型號與類型
+    std::string type() const override;
+    std::string subtype() const;  // N-channel 或 P-channel
+
+
+    // 參數設定與讀取使用 std::string）
+    virtual void setParameter(const std::string& name, double value) override;
+    virtual double getParameter(const std::string& name) const override;
+    std::vector<std::string> paramList() const override;
 
     // 參數驗證（檢查是否合理）
-    bool validateParameters(QString& errorMsg) const;
+    bool validateParameters(std::string& errorMsg) const;
 
-    // 特性曲線計算
-    QVector<QPointF> outputCurve(double Vgs) const override;
-      // Id vs Vds, 給定 Vgs
-    QVector<QPointF> transferCurve(double Vds) const;    // Id vs Vgs, 給定 Vds
 
+    // 特性曲線
+    std::vector<Point> outputCurve(double Vgs) const override;      // Id vs Vds
+    std::vector<Point> transferCurve() const override;              // Id vs Vgs
+
+
+    // MOSFET 特有的方法（可選）
+    std::vector<Point> transferCurve(double Vds) const;  // 給定 Vds 的轉移曲線
     // 工作點計算
     //回傳型別 函式名稱(參數列表) [const] [override] [final] = 0;
     BiasPoint calculateQPoint(double Vdd, double Rd, double Rg = 0) const override;
-
 
     // 找點功能
     double findVgsFromId(double Id, double Vds) const;   // 給 Id 找 Vgs
     double findIdFromVgs(double Vgs, double Vds) const;  // 給 Vgs 算 Id
     double findVdsFromId(double Id, double Vgs) const;   // 給 Id 找 Vds
 
-    QVector<QPointF> transferCurve() const override;
 
+#ifdef Qt_version
+        // 型號與類型
+
+    QString type() const override;
+    QString subtype() const;  // N-channel 或 P-channel
+
+
+    void setParameter(const QString& name, double value) override;
+    double getParameter(const QString& name) const override;
+
+    QStringList paramList() const override;
+
+    // 參數驗證（檢查是否合理）
+    bool validateParameters(QString& errorMsg) const;
+
+
+    // 特性曲線計算
+    QVector<QPointF> outputCurve(double Vgs) const override;
+      // Id vs Vds, 給定 Vgs
+    QVector<QPointF> transferCurve(double Vds) const;    // Id vs Vgs, 給定 Vds
+
+    QVector<QPointF> transferCurve() const override;
+#endif
 
 private:
     // 模型參數

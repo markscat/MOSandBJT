@@ -1,6 +1,13 @@
 #include "../include/mosfet.h"
 #include "../include/transistor.h"
+
+#include <cmath>      // 用 std::sqrt 取代 qSqrt
+#include <string>
+#include <vector>
+
+#ifdef Qt_version
 #include <QtMath>  // 如果需要 qPow 之類的
+#endif
 
 // 建構子：設定預設值
 MOSFET::MOSFET()
@@ -20,18 +27,18 @@ MOSFET::~MOSFET()
 }
 
 // 型號與類型
-QString MOSFET::type() const
+std::string MOSFET::type() const
 {
     return "MOSFET";
 }
 
-QString MOSFET::subtype() const
+std::string MOSFET::subtype() const
 {
     return m_isNChannel ? "N-channel" : "P-channel";
 }
 
 // 參數設定與讀取
-void MOSFET::setParameter(const QString& name, double value)
+void MOSFET::setParameter(const std::string& name, double value)
 {
     if (name == "Vth") m_Vth = value;
     else if (name == "Kn") m_Kn = value;
@@ -43,7 +50,7 @@ void MOSFET::setParameter(const QString& name, double value)
     // 忽略不認識的參數
 }
 
-double MOSFET::getParameter(const QString& name) const
+double MOSFET::getParameter(const std::string& name) const
 {
     if (name == "Vth") return m_Vth;
     if (name == "Kn") return m_Kn;
@@ -55,13 +62,13 @@ double MOSFET::getParameter(const QString& name) const
     return 0.0;
 }
 
-QStringList MOSFET::paramList() const
+std::vector<std::string> MOSFET::paramList() const
 {
     return {"Vth", "Kn", "lambda", "Rds_on", "gfs", "Id_max", "Vds_max"};
 }
 
 // 參數驗證
-bool MOSFET::validateParameters(QString& errorMsg) const
+bool MOSFET::validateParameters(std::string& errorMsg) const
 {
     if (m_Vth <= 0) {
         errorMsg = "Vth 必須大於 0";
@@ -79,14 +86,15 @@ bool MOSFET::validateParameters(QString& errorMsg) const
 }
 
 // 特性曲線計算
-QVector<QPointF> MOSFET::outputCurve(double Vgs) const
+std::vector<Point> MOSFET::outputCurve(double Vgs) const
 {
-    QVector<QPointF> points;
+    std::vector<Point> points;
+    points.reserve(101);  // 預留空間
 
     // 如果 Vgs < Vth，電晶體截止，Id = 0
     if (Vgs <= m_Vth) {
-        points.append(QPointF(0, 0));
-        points.append(QPointF(m_Vds_max, 0));
+        points.push_back(Point(0, 0));
+        points.push_back(Point(m_Vds_max, 0));
         return points;
     }
 
@@ -108,15 +116,25 @@ QVector<QPointF> MOSFET::outputCurve(double Vgs) const
         // 限制電流不超過 Id_max
         if (Id > m_Id_max) Id = m_Id_max;
 
-        points.append(QPointF(Vds, Id));
+        points.push_back(Point(Vds, Id));
+
     }
 
     return points;
 }
 
-QVector<QPointF> MOSFET::transferCurve(double Vds) const
+// 特性曲線計算 - 轉移曲線 (Id vs Vgs)，無參數版本（使用預設 Vds）
+std::vector<Point> MOSFET::transferCurve() const
 {
-    QVector<QPointF> points;
+    // 轉移曲線：Id vs Vgs，固定 Vds = 5V
+    return transferCurve(5.0);
+}
+
+std::vector<Point> MOSFET::transferCurve(double Vds) const
+{
+    std::vector<Point> points;
+    points.reserve(101);
+
 
     // 從 0 到 5V（假設 Vgs 範圍）
     for (int i = 0; i <= 100; i++) {
@@ -134,7 +152,7 @@ QVector<QPointF> MOSFET::transferCurve(double Vds) const
         }
 
         if (Id > m_Id_max) Id = m_Id_max;
-        points.append(QPointF(Vgs, Id));
+        points.push_back(Point(Vgs, Id));
     }
 
     return points;
@@ -154,7 +172,8 @@ BiasPoint MOSFET::calculateQPoint(double Vdd, double Rd, double Rg) const
     // 這裡先簡單回傳一個值
     bp.Vds = Vdd / 2;
     bp.Id = (Vdd - bp.Vds) / Rd;
-    bp.Vgs = m_Vth + qSqrt(bp.Id / m_Kn);
+    bp.Vgs = m_Vth + std::sqrt(bp.Id / m_Kn);
+    /*mosfet.cpp:175:22: Use of undeclared identifier 'qSqrt' (fixes available)*/
     bp.valid = true;
 
     return bp;
@@ -165,7 +184,7 @@ double MOSFET::findVgsFromId(double Id, double Vds) const
 {
     // 從 Id = Kn * (Vgs - Vth)^2 反推
     if (Id <= 0) return 0;
-    return m_Vth + qSqrt(Id / m_Kn);
+    return m_Vth + std::sqrt(Id / m_Kn);
 }
 
 double MOSFET::findIdFromVgs(double Vgs, double Vds) const
@@ -202,10 +221,10 @@ double MOSFET::findVdsFromId(double Id, double Vgs) const
         if (discriminant < 0) return 0;
 
         // 取較小的根（三極管區）
-        return (-b - qSqrt(discriminant)) / (2 * a);
+        return (-b - std::sqrt(discriminant)) / (2 * a);
     }
 }
-
+/*
 // 在 mosfet.cpp 加入
 QVector<QPointF> MOSFET::transferCurve() const
 {
@@ -236,3 +255,4 @@ QVector<QPointF> MOSFET::transferCurve() const
 
     return points;
 }
+*/

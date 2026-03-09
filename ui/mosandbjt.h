@@ -25,6 +25,7 @@ private slots:
 
 
 private:
+
     NumKeyBoard *numpadWindow = nullptr;  // 用來記住 numkeyboard 視窗
     void onNumpadEqualPressed(QString expression);
 
