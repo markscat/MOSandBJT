@@ -1,11 +1,6 @@
 #ifndef TRANSISTOR_H
 #define TRANSISTOR_H
 
-#ifdef Qt_version
-#include <QString>
-#include <QVector>
-#include <QPointF>
-#endif
 
 #include <string>
 #include <vector>
@@ -48,20 +43,7 @@ public:
     virtual std::vector<Point> outputCurve(double inputParam) const = 0;
     virtual std::vector<Point> transferCurve() const = 0;
 
- #ifdef Qt_version
-    virtual QString type() const = 0;  // "BJT" 或 "MOSFET"
-
-    virtual void setParameter(const QString& name, double value) = 0;
-    virtual double getParameter(const QString& name) const = 0;
-
-
-    virtual QStringList paramList() const = 0;  // 這顆電晶體有哪些參數
-    // 特性曲線
-    virtual QVector<QPointF> outputCurve(double inputParam) const = 0;
-    virtual QVector<QPointF> transferCurve() const = 0;
-#endif
     // 工作點
-
     virtual BiasPoint calculateQPoint(double Vcc, double Rc, double Rb) const = 0;
 };
 

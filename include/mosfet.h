@@ -77,6 +77,7 @@ public:
 
     // MOSFET 特有的方法（可選）
     std::vector<Point> transferCurve(double Vds) const;  // 給定 Vds 的轉移曲線
+
     // 工作點計算
     //回傳型別 函式名稱(參數列表) [const] [override] [final] = 0;
     BiasPoint calculateQPoint(double Vdd, double Rd, double Rg = 0) const override;
@@ -86,30 +87,8 @@ public:
     double findIdFromVgs(double Vgs, double Vds) const;  // 給 Vgs 算 Id
     double findVdsFromId(double Id, double Vgs) const;   // 給 Id 找 Vds
 
-
-#ifdef Qt_version
-        // 型號與類型
-
-    QString type() const override;
-    QString subtype() const;  // N-channel 或 P-channel
-
-
-    void setParameter(const QString& name, double value) override;
-    double getParameter(const QString& name) const override;
-
-    QStringList paramList() const override;
-
-    // 參數驗證（檢查是否合理）
-    bool validateParameters(QString& errorMsg) const;
-
-
-    // 特性曲線計算
-    QVector<QPointF> outputCurve(double Vgs) const override;
-      // Id vs Vds, 給定 Vgs
-    QVector<QPointF> transferCurve(double Vds) const;    // Id vs Vgs, 給定 Vds
-
-    QVector<QPointF> transferCurve() const override;
-#endif
+    void setCurvePoints(int points);
+    int getCurvePoints() const;
 
 private:
     // 模型參數
@@ -122,6 +101,8 @@ private:
     double m_Vds_max;   // 最大電壓 (V)
 
     bool m_isNChannel;  // true: N-channel, false: P-channel
+
+    int m_curvePoints = 1000;  // 預設 1000 點
 
     // 內部計算函式
     double calculateId_saturation(double Vgs, double Vds) const;

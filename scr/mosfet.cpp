@@ -89,7 +89,7 @@ bool MOSFET::validateParameters(std::string& errorMsg) const
 std::vector<Point> MOSFET::outputCurve(double Vgs) const
 {
     std::vector<Point> points;
-    points.reserve(101);  // 預留空間
+    points.reserve(m_curvePoints + 1);
 
     // 如果 Vgs < Vth，電晶體截止，Id = 0
     if (Vgs <= m_Vth) {
@@ -101,8 +101,8 @@ std::vector<Point> MOSFET::outputCurve(double Vgs) const
     double Vds_sat = Vgs - m_Vth;  // 飽和區起始電壓
 
     // 從 0 到 Vds_max 取 100 個點
-    for (int i = 0; i <= 100; i++) {
-        double Vds = (i / 100.0) * m_Vds_max;
+    for (int i = 0; i <= m_curvePoints; i++) {
+        double Vds = (i /(double)m_curvePoints) * m_Vds_max;
         double Id = 0;
 
         if (Vds < Vds_sat) {
@@ -110,6 +110,7 @@ std::vector<Point> MOSFET::outputCurve(double Vgs) const
             Id = m_Kn * (2 * (Vgs - m_Vth) * Vds - Vds * Vds);
         } else {
             // 飽和區
+
             Id = m_Kn * (Vgs - m_Vth) * (Vgs - m_Vth) * (1 + m_lambda * Vds);
         }
 
@@ -137,8 +138,8 @@ std::vector<Point> MOSFET::transferCurve(double Vds) const
 
 
     // 從 0 到 5V（假設 Vgs 範圍）
-    for (int i = 0; i <= 100; i++) {
-        double Vgs = (i / 100.0) * 5.0;
+    for (int i = 0; i <= m_curvePoints; i++) {
+        double Vgs = (i / (double)m_curvePoints) * 5.0;
         double Id = 0;
 
         if (Vgs > m_Vth) {
@@ -224,35 +225,6 @@ double MOSFET::findVdsFromId(double Id, double Vgs) const
         return (-b - std::sqrt(discriminant)) / (2 * a);
     }
 }
-/*
-// 在 mosfet.cpp 加入
-QVector<QPointF> MOSFET::transferCurve() const
-{
-    // 轉移曲線：Id vs Vgs，固定 Vds
-    QVector<QPointF> points;
 
-    // 假設 Vds = 5V（或從參數來）
-    double Vds = 5.0;
-
-    // 從 0 到 5V 取 100 個點
-    for (int i = 0; i <= 100; i++) {
-        double Vgs = (i / 100.0) * 5.0;
-        double Id = 0;
-
-        if (Vgs > m_Vth) {
-            if (Vds >= Vgs - m_Vth) {
-                // 飽和區
-                Id = m_Kn * (Vgs - m_Vth) * (Vgs - m_Vth) * (1 + m_lambda * Vds);
-            } else {
-                // 三極管區
-                Id = m_Kn * (2 * (Vgs - m_Vth) * Vds - Vds * Vds);
-            }
-        }
-
-        if (Id > m_Id_max) Id = m_Id_max;
-        points.append(QPointF(Vgs, Id));
-    }
-
-    return points;
-}
-*/
+void MOSFET::setCurvePoints(int points) { m_curvePoints = points; }
+int MOSFET::getCurvePoints() const { return m_curvePoints; }

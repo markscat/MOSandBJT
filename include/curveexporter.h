@@ -1,14 +1,6 @@
 #ifndef CURVEEXPORTER_H
 #define CURVEEXPORTER_H
 
-#ifdef Qt_version
-#include <QString>
-#include <QVector>
-#include <QPointF>
-#include <QFile>
-#include <QTextStream>
-#endif
-
 #include <string>
 #include <vector>
 #include <fstream>  // 標準 C++ 檔案操作
@@ -34,21 +26,7 @@ public:
                                   const std::string& xLabel = "Vds",
                                   const std::string& yLabel = "Id");
 
-#ifdef Qt_version
-    // 靜態方法，直接叫用
-    static bool toCSV(const QVector<QPointF>& curve,
-                      const QString& filename,
-                      const QString& xLabel = "Vds",
-                      const QString& yLabel = "Id");
 
-    static bool toTXT(const QVector<QPointF>& curve,
-                      const QString& filename);
-
-    static bool toCSVWithMetadata(const QVector<QPointF>& curve,
-                                  const QString& filename,
-                                  const QString& metadata);
-
-#endif
 
 };
 
