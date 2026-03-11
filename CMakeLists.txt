@@ -34,6 +34,14 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         include/transistor.h
         include/curveexporter.h
         scr/curveexporter.cpp
+        ui/curve_utils.h
+        ui/curve_utils.cpp
+        scr/bjt.cpp
+        include/File_save.h
+        scr/File_save.cpp
+
+
+
 
     )
 # Define target properties for Android with Qt 6 as:

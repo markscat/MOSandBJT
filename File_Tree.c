@@ -8,12 +8,12 @@ MOSandBJT/
 │   │   ├── mosfet.h           # MOSFET 模型宣告
 │   │   └── mosfet.cpp         # MOSFET 模型實作
 │   │
-│   ├── math/                  # 數學工具
+│   ├── math/                  # 數學工具(整合到MOSFET以及BJT中)
 │   │   ├── curves.h           # 曲線計算
 │   │   ├── interpolation.h    # 內插（找點用）
 │   │   └── solver.h           # 解方程（找工作點）
 │   │
-│   └── parameters/            # 參數處理
+│   └── parameters/            # 參數處理(整合到MOSFET以及BJT中)
 │       ├── parameter.h        # 參數定義（名稱、範圍、單位）
 │       └── validator.h        # 參數驗證（合理範圍檢查）
 │

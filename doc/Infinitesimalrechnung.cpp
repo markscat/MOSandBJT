@@ -1,5 +1,8 @@
 ﻿/*
-Infinitesimalrechnung 德文 無窮小的計算;翻譯成中文則是：微積分
+ * Infinitesimalrechnung 德文 無窮小的計算;翻譯成中文則是：微積分
+ * 
+ * 加入回歸分析功能
+ * 
 */
 //#include "Infinitesimalrechnung.h"
 #include "..\include\Infinitesimalrechnung.h" 

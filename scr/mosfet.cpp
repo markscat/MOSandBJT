@@ -5,10 +5,6 @@
 #include <string>
 #include <vector>
 
-#ifdef Qt_version
-#include <QtMath>  // 如果需要 qPow 之類的
-#endif
-
 // 建構子：設定預設值
 MOSFET::MOSFET()
     : m_Vth(2.0)        // 典型值 2V
@@ -19,6 +15,10 @@ MOSFET::MOSFET()
     , m_Id_max(10.0)    // 典型值 10A
     , m_Vds_max(100.0)  // 典型值 100V
     , m_isNChannel(true)
+    , m_Cgs(0)      // 1pF 典型值
+    , m_Cgd(0)      // 1pF
+    , m_Cds(0)      // 1pF
+
 {
 }
 
@@ -226,5 +226,110 @@ double MOSFET::findVdsFromId(double Id, double Vgs) const
     }
 }
 
-void MOSFET::setCurvePoints(int points) { m_curvePoints = points; }
-int MOSFET::getCurvePoints() const { return m_curvePoints; }
+
+// 設定電容參數
+void MOSFET::setCapacitances(double Cgs, double Cgd, double Cds)
+{
+    m_Cgs = Cgs;
+    m_Cgd = Cgd;
+    m_Cds = Cds;
+
+    // 簡單起見，先不設電壓相依性
+    /*
+     * m_Cgs_Vmax = Cgs;
+     * m_Cgd_Vmax = Cgd;
+     * m_Cds_Vmax = Cds;
+     */
+}
+
+// 取得電容值（考慮電壓相依性）
+MOSFET::Capacitances MOSFET::getCapacitances(double Vgs, double Vds) const
+{
+    Capacitances caps;
+
+    // Cgs 主要受 Vgs 影響
+    if (Vgs < m_Vth) {
+        // 截止區：電容較小
+        caps.Cgs = m_Cgs * 0.5;
+    } else {
+        // 導通區：電容較大
+        caps.Cgs = m_Cgs;
+    }
+
+    // Cgd 是米勒電容，受 Vds 影響很大
+    if (Vds < 1.0) {
+        // 低 Vds：電容較大
+        caps.Cgd = m_Cgd * 2.0;
+    } else if (Vds > 10.0) {
+        // 高 Vds：電容較小
+        caps.Cgd = m_Cgd * 0.5;
+    } else {
+        // 中間線性變化
+        double ratio = (Vds - 1.0) / 9.0;
+        caps.Cgd = m_Cgd * (2.0 - ratio);
+    }
+
+    // Cds 主要受 Vds 影響
+    caps.Cds = m_Cds * (1.0 / std::sqrt(1.0 + Vds));
+
+    return caps;
+}
+
+// 計算米勒電荷
+double MOSFET::calculateMillerCharge(double Vgs_start, double Vgs_end, double Vds) const
+{
+    //double m_Cgs_Vmax;
+    // 米勒電荷 Qgd = ∫ Cgd dVgd
+    // 簡化：用平均電容 × 電壓變化
+    double Vgd_start = Vgs_start - Vds;
+    double Vgd_end = Vgs_end - Vds;
+
+    double Cgd_start = m_Cgd;  // 這裡可以用 getCapacitances 來算
+    double Cgd_end = m_Cgd;
+
+    double avg_Cgd = (Cgd_start + Cgd_end) / 2.0;
+    return avg_Cgd * std::abs(Vgd_end - Vgd_start);
+}
+
+// 計算開通延遲
+double MOSFET::calculateTurnOnDelay(double Vgs, double Rg) const
+{
+    // 簡單 RC 延遲：τ = Rg × Ciss
+    // Ciss = Cgs + Cgd
+    double Ciss = m_Cgs + m_Cgd;
+    double tau = Rg * Ciss;
+
+    // 充電到 Vth 的時間（粗略）
+    if (Vgs > m_Vth) {
+        return -tau * std::log(1.0 - m_Vth / Vgs);
+    }
+    return 0.0;
+}
+
+// 計算關斷延遲
+double MOSFET::calculateTurnOffDelay(double Vgs, double Rg) const
+{
+    // 簡單 RC 放電
+    double Ciss = m_Cgs + m_Cgd;
+    double tau = Rg * Ciss;
+
+    // 從 Vgs 放電到 Vth 的時間
+    if (Vgs > m_Vth) {
+        return tau * std::log(Vgs / m_Vth);
+    }
+    return 0.0;
+}
+
+
+
+
+
+
+
+void MOSFET::setCurvePoints(int points) {
+    m_curvePoints = points;
+}
+int MOSFET::getCurvePoints() const {
+    return m_curvePoints;
+}
+

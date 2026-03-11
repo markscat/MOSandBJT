@@ -88,7 +88,6 @@ for (const auto& p : corePoints) {
 // 再用 qtPoints 畫圖
 */
 
-
 MOSandBJT::~MOSandBJT()
 {
     delete ui;
