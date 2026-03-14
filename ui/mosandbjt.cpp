@@ -2,6 +2,8 @@
 #include "ui/ui_mosandbjt.h"
 #include "../ui/numkeyboard.h"
 #include "../ui/mosandbjt.h"
+#include "../qcustomplot.h"  // 上一層目錄
+
 /* 本程式使用簡化物理模型計算電晶體特性曲線，所有參數皆來自元件規格書。
  * 由於實際元件存在製程變異、溫度效應、寄生參數等因素，計算結果僅供參考。
  * 若要獲得精確數值，請以實際量測為準。
@@ -31,6 +33,7 @@ MOSandBJT::MOSandBJT(QWidget *parent)
     , ui(new Ui::MOSandBJT)
 {
     ui->setupUi(this);
+    ui->Input_pushButton->setVisible(false);
 
 
 }
@@ -68,7 +71,7 @@ void MOSandBJT::onNumpadEqualPressed(QString expression)
 {
     qDebug() << "MOSandBJT: onNumpadEqualPressed received =" << expression;  // 加這行
 
-    ui->lineEdit->setText(expression);  // 把整個算式放進去
+    ui->Vth_lineEdit->setText(expression);  // 把整個算式放進去
     // 或者你要在這裡計算結果也可以
 }
 

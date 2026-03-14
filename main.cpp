@@ -4,7 +4,7 @@
 #include "include/curveexporter.h"
 #include "include/File_save.h"
 
-#define TEST_MOSFET
+//#define TEST_MOSFET
 #ifdef TEST_MOSFET
 #include <iostream>
 #include <vector>
@@ -18,7 +18,7 @@
 int main(int argc, char *argv[])
 {
 
-#define TEST_MOSFET
+//#define TEST_MOSFET
 #ifdef TEST_MOSFET
 /*
     // ========== 測試模式 ==========
