@@ -1,6 +1,7 @@
 #ifndef BJT_H
 #define BJT_H
 
+#include "../ui/cauverdrawable.h"
 #include "transistor.h"
 #include <string>
 #include <vector>
@@ -25,7 +26,7 @@
 
 
 
-class BJT : public Transistor
+class BJT : public Transistor,public CurveDrawable
 {
 public:
 
@@ -192,6 +193,15 @@ public:
     * 
     */
     int getCurvePoints() const { return m_curvePoints; }
+
+
+    // 新增：從 CurveDrawable 繼承來的函式
+    std::vector<Point> generateCurve(double inputParam) const override;
+
+    QString deviceType() const override;
+
+    QString inputUnit() const override;
+
 
 private:
     // 模型參數

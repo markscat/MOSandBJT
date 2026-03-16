@@ -3,11 +3,10 @@
 */
 
 #include "../ui/curve_utils.h"
-
-//"curve_utils.h"
 #include "../include/mosfet.h"
 #include "../include/bjt.h"
 
+#define UI_Curve_Drawing
 //------------------------------------------------------------------------------
 // UI 層專用：用 Qt 型態的輔助函式實作
 //------------------------------------------------------------------------------
@@ -26,45 +25,45 @@ QVector<QPointF> toQtPoints(const std::vector<Point>& points) {
     return qtPoints;
 }
 
-QVector<UICurveData> generateOutputCurves(
-    const MOSFET& mos,
-    const QVector<double>& Vgs_list,
-    const QString& label_prefix)
-{
-    QVector<UICurveData> curves;
-    curves.reserve(Vgs_list.size());
+//------------------------------------------------------------------------------
+// 產生參數列表
+//------------------------------------------------------------------------------
 
-    for (double Vgs : Vgs_list) {
-        auto stlPoints = mos.outputCurve(Vgs);
-        QVector<QPointF> qtPoints = toQtPoints(stlPoints);
-        QString label = label_prefix + QString::number(Vgs) + "V";
-        curves.append(UICurveData(qtPoints, label));
-    }
-
-    return curves;
-}
-
-QVector<double> generateVgsList(double start, double end, int count)
+QVector<double> generateParamList(double start, double end, int count)
 {
     QVector<double> list;
-    list.reserve(count);
 
+    if (count <= 1) {
+        if (count == 1) list.append(start);
+        return list;
+    }
+
+    list.reserve(count);
     double step = (end - start) / (count - 1);
+
     for (int i = 0; i < count; ++i) {
         list.append(start + i * step);
     }
+
     return list;
 }
 
-QVector<UICurveData> generateOutputCurves(
-    const MOSFET& mos,
-    double Vgs_start,
-    double Vgs_end,
-    int count,
-    const QString& label_prefix)
-{
-    QVector<double> Vgs_list = generateVgsList(Vgs_start, Vgs_end, count);
-    return generateOutputCurves(mos, Vgs_list, label_prefix);
-}
+
+//------------------------------------------------------------------------------
+// Template 函式實作注意事項
+//------------------------------------------------------------------------------
+//
+// 注意：generateOutputCurves 的 template 版本已經在 .h 檔中完整實作，
+//       因為 template 函式通常需要將實作放在標頭檔中，編譯器才能根據
+//       不同型別產生對應的程式碼。
+//
+//       如果你堅持要把 template 實作放在 .cpp 中，需要使用 explicit instantiation，
+//       但這會讓程式碼變得複雜且不易維護。
+//
+//       因此，generateOutputCurves 的實作保留在 curve_utils.h 中。
+//
+//------------------------------------------------------------------------------
+
+
 
 #endif // UI_Curve_Drawing

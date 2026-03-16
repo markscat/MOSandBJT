@@ -287,3 +287,20 @@ double BJT::findVceFromIc(double Ic, double Ib) const
         return (ratio - 1.0) * m_Va;
     }
 }
+
+
+std::vector<Point> BJT::generateCurve(double inputParam) const
+{
+    // 直接呼叫 BJT 自己的 outputCurve
+    return outputCurve(inputParam);
+}
+
+QString BJT::deviceType() const
+{
+    return "BJT";
+}
+
+QString BJT::inputUnit() const
+{
+    return "A";  // Ib 的單位是安培
+}

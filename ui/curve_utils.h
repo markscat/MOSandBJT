@@ -2,31 +2,30 @@
 #define CURVE_UTILS_H
 
 #include "../include/mosfet.h"
+#include "../include/bjt.h"
 #include <vector>
 #include <string>
+#include <QVector>
+#include <QPointF>
+#include <QString>
 
-// 核心用的 Point 結構（已經在 transistor.h 裡）
-// struct Point { double x; double y; };
+//------------------------------------------------------------------------------
+// 核心用的結構（不依賴 Qt）
+//------------------------------------------------------------------------------
 
-// 核心用的 CurveData（如果需要的話）
+// 核心用的 CurveData
 struct CurveData {
     std::vector<Point> points;
-    //curve_utils.h:12:17: Use of undeclared identifier 'Point'
-
     std::string label;
+
     CurveData(const std::vector<Point>& p, const std::string& lbl)
         : points(p), label(lbl) {}
 };
 
 //------------------------------------------------------------------------------
 // UI 層專用：用 Qt 型態的輔助函式
-// 只有在定義了 UI_Curve_Drawing 時才會編譯
 //------------------------------------------------------------------------------
-#ifdef UI_Curve_Drawing
 
-#include <QVector>
-#include <QPointF>
-#include <QString>
 
 // UI 層專用結構：包裝一條曲線和它的標籤
 struct UICurveData {
@@ -40,25 +39,88 @@ struct UICurveData {
 // 轉換函式
 QVector<QPointF> toQtPoints(const std::vector<Point>& points);
 
-// 產生一組 Vgs 曲線（回傳 Qt 版本）
-QVector<UICurveData> generateOutputCurves(
-    const MOSFET& mos,
-    const QVector<double>& Vgs_list,
-    const QString& label_prefix = "Vgs="
-    );
 
-// 從範圍產生 Vgs 列表
-QVector<double> generateVgsList(double start, double end, int count);
+//------------------------------------------------------------------------------
+// Template 函式：產生一組輸出特性曲線（適用於 MOSFET 和 BJT）
+//------------------------------------------------------------------------------
 
-// 合併版
+
+/**
+ * 產生一組輸出特性曲線
+ * @param device     MOSFET 或 BJT 物件
+ * @param param_list 輸入參數列表（MOSFET 為 Vgs，BJT 為 Ib）
+ * @param label_prefix 標籤前綴（預設 "Input="）
+ * @return 一組 UICurveData，每條曲線包含點和標籤
+ */
+
+template<typename DeviceType>
 QVector<UICurveData> generateOutputCurves(
-    const MOSFET& mos,
-    double Vgs_start,
-    double Vgs_end,
+    const DeviceType& device,
+    const QVector<double>& param_list,
+    const QString& label_prefix = "Input=")
+{
+    // 檢查 DeviceType 是否繼承 CurveDrawable（編譯期檢查）
+    static_assert(std::is_base_of_v<CurveDrawable, DeviceType>,
+                  "DeviceType must inherit from CurveDrawable");
+
+
+    QVector<UICurveData> curves;
+    curves.reserve(param_list.size());
+
+    for (double param : param_list) {
+
+
+        // 呼叫 device 的 outputCurve()，回傳 std::vector<Point>
+        auto stlPoints = device.outputCurve(param);
+
+        // 轉成 Qt 用的 QVector<QPointF>
+        QVector<QPointF> qtPoints = toQtPoints(stlPoints);
+
+
+        // 直接用 device.inputUnit() 取得單位
+        QString label = label_prefix + QString::number(param) + device.inputUnit();
+        curves.append(UICurveData(qtPoints, label));
+        /*
+        // 根據 device 型別決定單位
+        QString unit;
+        if constexpr (std::is_same_v<DeviceType, MOSFET>) {
+            unit = "V";
+        } else if constexpr (std::is_same_v<DeviceType, BJT>) {
+            unit = "A";
+        } else {
+            unit = "";
+        }
+        label = label_prefix + QString::number(param) + unit;
+        */
+        curves.append(UICurveData(qtPoints, label));
+    }
+
+    return curves;
+}
+
+//------------------------------------------------------------------------------
+// 輔助函式：產生參數列表
+//------------------------------------------------------------------------------
+
+/**
+ * 從 start 到 end 產生 count 個等間距的數值
+ */
+QVector<double> generateParamList(double start, double end, int count);
+
+/**
+ * 合併版：直接給範圍和數量，產生曲線
+ */
+template<typename DeviceType>
+QVector<UICurveData> generateOutputCurves(
+    const DeviceType& device,
+    double param_start,
+    double param_end,
     int count,
-    const QString& label_prefix = "Vgs="
-    );
+    const QString& label_prefix = "Input=")
+{
+    QVector<double> param_list = generateParamList(param_start, param_end, count);
+    return generateOutputCurves(device, param_list, label_prefix);
+}
 
-#endif // UI_Curve_Drawing
 
 #endif // CURVE_UTILS_H

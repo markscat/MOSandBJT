@@ -46,6 +46,8 @@
 
 
 #include "transistor.h"
+
+#include "../ui/cauverdrawable.h"
 #include <string>
 #include <vector>
 
@@ -67,9 +69,8 @@
 * @see Transistor
 * @see BJT
 * */
+class MOSFET : public Transistor,public CurveDrawable{
 
-class MOSFET : public Transistor
-{
 public:
     /**
 	* @brief MOSFET 類別建構子
@@ -342,6 +343,16 @@ public:
     */
     int getCurvePoints() const;
 
+
+
+    // 新增：從 CurveDrawable 繼承來的函式
+    std::vector<Point> generateCurve(double inputParam) const override;
+
+    QString deviceType() const override;
+
+    QString inputUnit() const override;
+
+
 private:
 
     /**
@@ -419,6 +430,7 @@ private:
     */
     double calculateVds_saturation(double Vgs) const;  // 飽和區起始電壓
 };
+
 
 
 #endif // MOSFET_H

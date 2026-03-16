@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1108</width>
-    <height>803</height>
+    <width>1253</width>
+    <height>896</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,9 +18,9 @@
     <property name="geometry">
      <rect>
       <x>14</x>
-      <y>49</y>
-      <width>1081</width>
-      <height>701</height>
+      <y>29</y>
+      <width>1221</width>
+      <height>801</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -30,11 +30,11 @@
      <attribute name="title">
       <string>MOS 分析</string>
      </attribute>
-     <widget class="QFrame" name="frame">
+     <widget class="QFrame" name="Vth_frame">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>20</y>
+        <x>0</x>
+        <y>0</y>
         <width>211</width>
         <height>81</height>
        </rect>
@@ -108,11 +108,11 @@
        </property>
       </widget>
      </widget>
-     <widget class="QFrame" name="frame_2">
+     <widget class="QFrame" name="Rds_frame">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>100</y>
+        <x>0</x>
+        <y>80</y>
         <width>211</width>
         <height>101</height>
        </rect>
@@ -192,11 +192,11 @@
        </property>
       </widget>
      </widget>
-     <widget class="QFrame" name="frame_3">
+     <widget class="QFrame" name="Gfs_frame">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>200</y>
+        <x>0</x>
+        <y>180</y>
         <width>211</width>
         <height>91</height>
        </rect>
@@ -263,11 +263,11 @@
        </property>
       </widget>
      </widget>
-     <widget class="QFrame" name="frame_4">
+     <widget class="QFrame" name="Id_frame">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>300</y>
+        <x>0</x>
+        <y>280</y>
         <width>211</width>
         <height>71</height>
        </rect>
@@ -334,11 +334,11 @@
        </property>
       </widget>
      </widget>
-     <widget class="QFrame" name="frame_5">
+     <widget class="QFrame" name="Vd_frame">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>370</y>
+        <x>0</x>
+        <y>350</y>
         <width>211</width>
         <height>71</height>
        </rect>
@@ -405,11 +405,11 @@
        </property>
       </widget>
      </widget>
-     <widget class="QFrame" name="frame_6">
+     <widget class="QFrame" name="Ciss_frame">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>450</y>
+        <x>0</x>
+        <y>430</y>
         <width>211</width>
         <height>71</height>
        </rect>
@@ -476,11 +476,11 @@
        </property>
       </widget>
      </widget>
-     <widget class="QFrame" name="frame_7">
+     <widget class="QFrame" name="Coss_frame">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>520</y>
+        <x>0</x>
+        <y>500</y>
         <width>211</width>
         <height>71</height>
        </rect>
@@ -547,11 +547,11 @@
        </property>
       </widget>
      </widget>
-     <widget class="QFrame" name="frame_9">
+     <widget class="QFrame" name="Crss_frame">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>590</y>
+        <x>0</x>
+        <y>570</y>
         <width>211</width>
         <height>71</height>
        </rect>
@@ -575,7 +575,7 @@
         <string>Crss</string>
        </property>
       </widget>
-      <widget class="QLineEdit" name="gfs_lineEdit_7">
+      <widget class="QLineEdit" name="Crss_lineEdit">
        <property name="geometry">
         <rect>
          <x>80</x>
@@ -618,11 +618,11 @@
        </property>
       </widget>
      </widget>
-     <widget class="QFrame" name="frame_8">
+     <widget class="QFrame" name="Kn_frame">
       <property name="geometry">
        <rect>
-        <x>240</x>
-        <y>20</y>
+        <x>220</x>
+        <y>0</y>
         <width>221</width>
         <height>81</height>
        </rect>
@@ -646,7 +646,7 @@
         <string>Kn</string>
        </property>
       </widget>
-      <widget class="QLineEdit" name="Vth_lineEdit_2">
+      <widget class="QLineEdit" name="Kn_lineEdit">
        <property name="geometry">
         <rect>
          <x>80</x>
@@ -683,11 +683,11 @@
        </property>
       </widget>
      </widget>
-     <widget class="QFrame" name="frame_10">
+     <widget class="QFrame" name="Lmpda_fram">
       <property name="geometry">
        <rect>
-        <x>240</x>
-        <y>110</y>
+        <x>440</x>
+        <y>0</y>
         <width>221</width>
         <height>91</height>
        </rect>
@@ -711,7 +711,7 @@
         <string>λ</string>
        </property>
       </widget>
-      <widget class="QLineEdit" name="Vth_lineEdit_3">
+      <widget class="QLineEdit" name="Lmpda_lineEdit">
        <property name="geometry">
         <rect>
          <x>80</x>
@@ -761,54 +761,167 @@
        </property>
       </widget>
      </widget>
-     <widget class="QWidget" name="widget" native="true">
+     <widget class="QLabel" name="Id_label">
       <property name="geometry">
        <rect>
-        <x>320</x>
-        <y>220</y>
-        <width>741</width>
-        <height>431</height>
+        <x>220</x>
+        <y>370</y>
+        <width>45</width>
+        <height>25</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">background-color: white;
-border: 1px solid gray;</string>
+       <string notr="true">transform: rotate(-90deg);</string>
+      </property>
+      <property name="text">
+       <string>Id(A)</string>
       </property>
      </widget>
-     <widget class="QComboBox" name="comboBox">
-      <property name="geometry">
-       <rect>
-        <x>560</x>
-        <y>20</y>
-        <width>91</width>
-        <height>21</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_36">
+     <widget class="QFrame" name="frame">
       <property name="geometry">
        <rect>
         <x>660</x>
-        <y>20</y>
+        <y>0</y>
+        <width>231</width>
+        <height>61</height>
+       </rect>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Raised</enum>
+      </property>
+      <widget class="QLabel" name="label_36">
+       <property name="geometry">
+        <rect>
+         <x>150</x>
+         <y>10</y>
+         <width>63</width>
+         <height>19</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>特性曲線</string>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="OutOrtran_comboBox">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>120</width>
+         <height>21</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_37">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>40</y>
+         <width>81</width>
+         <height>19</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>輸出/轉換</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QLabel" name="V_label">
+      <property name="geometry">
+       <rect>
+        <x>680</x>
+        <y>720</y>
         <width>63</width>
         <height>19</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
       <property name="text">
-       <string>特性曲線</string>
+       <string>V</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_37">
+     <widget class="QFrame" name="frame_2">
       <property name="geometry">
        <rect>
-        <x>570</x>
-        <y>40</y>
-        <width>81</width>
+        <x>280</x>
+        <y>100</y>
+        <width>921</width>
+        <height>611</height>
+       </rect>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Raised</enum>
+      </property>
+      <widget class="QScrollBar" name="plot_vScrollBar">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>10</y>
+         <width>20</width>
+         <height>580</height>
+        </rect>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+      </widget>
+      <widget class="QWidget" name="mosPlot_widget" native="true">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>10</y>
+         <width>890</width>
+         <height>580</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: white;
+border: 1px solid gray;</string>
+       </property>
+      </widget>
+      <widget class="QScrollBar" name="plot_hScrollBar">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>590</y>
+         <width>890</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QLabel" name="Work_Point_label">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>740</y>
+        <width>171</width>
         <height>19</height>
        </rect>
       </property>
       <property name="text">
-       <string>輸出or 轉換</string>
+       <string>Workpoint</string>
       </property>
      </widget>
     </widget>
@@ -877,8 +990,8 @@ border: 1px solid gray;</string>
    <widget class="QPushButton" name="Input_pushButton">
     <property name="geometry">
      <rect>
-      <x>770</x>
-      <y>20</y>
+      <x>640</x>
+      <y>0</y>
       <width>93</width>
       <height>28</height>
      </rect>
@@ -890,8 +1003,8 @@ border: 1px solid gray;</string>
    <widget class="QPushButton" name="Save_pushButton">
     <property name="geometry">
      <rect>
-      <x>880</x>
-      <y>20</y>
+      <x>870</x>
+      <y>0</y>
       <width>93</width>
       <height>28</height>
      </rect>
@@ -904,7 +1017,7 @@ border: 1px solid gray;</string>
     <property name="geometry">
      <rect>
       <x>980</x>
-      <y>20</y>
+      <y>0</y>
       <width>93</width>
       <height>28</height>
      </rect>
@@ -913,13 +1026,26 @@ border: 1px solid gray;</string>
      <string>計算</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="resetView_pushButton">
+    <property name="geometry">
+     <rect>
+      <x>760</x>
+      <y>0</y>
+      <width>93</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>恢復視角</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1108</width>
+     <width>1253</width>
      <height>25</height>
     </rect>
    </property>

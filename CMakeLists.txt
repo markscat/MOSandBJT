@@ -42,6 +42,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         scr/bjt.cpp
         include/File_save.h
         scr/File_save.cpp
+        ui/cauverdrawable.h
 
 
 

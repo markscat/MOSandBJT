@@ -1,5 +1,6 @@
 #include "../include/mosfet.h"
 #include "../include/transistor.h"
+#include "../ui/cauverdrawable.h"
 
 #include <cmath>      // 用 std::sqrt 取代 qSqrt
 #include <string>
@@ -320,16 +321,26 @@ double MOSFET::calculateTurnOffDelay(double Vgs, double Rg) const
     return 0.0;
 }
 
-
-
-
-
-
-
 void MOSFET::setCurvePoints(int points) {
     m_curvePoints = points;
 }
 int MOSFET::getCurvePoints() const {
     return m_curvePoints;
+}
+
+
+
+std::vector<Point> MOSFET::generateCurve(double inputParam) const {
+    return outputCurve(inputParam);  // 直接呼叫原本的函式
+    /*mosfet.h:429:12: Use of undeclared identifier 'outputCurve'
+     */
+}
+
+QString MOSFET::deviceType() const {
+    return "MOSFET";
+}
+
+QString MOSFET::inputUnit() const {
+    return "V";  // Vgs 的單位
 }
 
