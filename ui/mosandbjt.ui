@@ -359,10 +359,10 @@
         </rect>
        </property>
        <property name="text">
-        <string>Vd</string>
+        <string>Vdss</string>
        </property>
       </widget>
-      <widget class="QLineEdit" name="Vd_lineEdit">
+      <widget class="QLineEdit" name="Vdss_lineEdit">
        <property name="geometry">
         <rect>
          <x>80</x>
@@ -1046,7 +1046,7 @@ border: 1px solid gray;</string>
      <x>0</x>
      <y>0</y>
      <width>1253</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFunction">

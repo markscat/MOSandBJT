@@ -53,8 +53,7 @@ QVector<QPointF> toQtPoints(const std::vector<Point>& points);
  * @return 一組 UICurveData，每條曲線包含點和標籤
  */
 
-template<typename DeviceType>
-QVector<UICurveData> generateOutputCurves(
+template<typename DeviceType> QVector<UICurveData> generateOutputCurves(
     const DeviceType& device,
     const QVector<double>& param_list,
     const QString& label_prefix = "Input=")

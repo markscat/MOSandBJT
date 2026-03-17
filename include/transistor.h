@@ -54,24 +54,51 @@ struct Point {
                      而對於 MOSFET，Vds、Id 和 Vgs 是主要的參數。當計算工作點時，如果參數不合理或計算失敗，valid 會被設置為 false，以便使用者知道工作點無效。
 */
 struct BiasPoint {
+    //bjt
     double Vce;     // 8 bytes
     double Ic;      // 8 bytes
     double Ib;      // 8 bytes
+
+    //mos
     double Vds;     // 8 bytes
     double Id;      // 8 bytes
     double Vgs;     // 8 bytes
     bool valid;     // 1 byte (+ padding)
 
     BiasPoint() : Vce(0), Ic(0), Ib(0), Vds(0), Id(0), Vgs(0), valid(false) {}
+};
 
+enum class BiasConfig {
+    FixedVgs,        // MOSFET: 固定 Vgs
+    FixedIb,         // BJT: 固定 Ib
+    VoltageDivider,  // 電阻分壓
+    CurrentSource,   // 電流源偏壓
+    FourResistor,    // BJT 四電阻偏壓
+    Unknown,         //未知選項
+    // ... 其他組態
 };
 
 
+struct BiasParams {
+    BiasConfig config;
+    double Vcc;      // 電源電壓
 
+    double Rc;       // 集極(C)電阻 (Bjt用)
+    double Re;       // 射極(E)電阻 (Bjt用)
+    double Rd;       // 汲極(D)電阻（MOSFET用）
+    double Rs;       // 源極(S)電阻（MOSFET用）
+    //Rb or Rg可以由R1或R2來決定
+    double R1, R2;   // 分壓電阻（可選）
+    double Ib;       // 基極電流（BJT用，可選）
+    double Vgs;      // 閘極電壓（MOSFET用，可選）
+    BiasParams() : config(BiasConfig::Unknown), Vcc(0), Rc(0),Re(0),Rd(0),Rs(0),
+        R1(0), R2(0), Ib(0), Vgs(0) {}
+};
 
 class Transistor
 {
 public:
+
     virtual ~Transistor() = default;
 
     // 型號與類型
@@ -146,7 +173,15 @@ public:
     * @details 這個方法是 Transistor 類別的純虛擬方法，BJT 和 MOSFET 類別必須實作它以計算工作點。對於 BJT，方法會根據給定的電源電壓 Vcc、集極電阻 Rc 和基極電阻 Rb 計算 Vce、Ic 和 Ib；對於 MOSFET，方法會根據給定的電源電壓 Vcc、汲極電阻 Rc 和閘極電阻 Rb 計算 Vds、Id 和 Vgs。
 			   使用者可以通過這個方法來獲取晶體管在特定電路條件下的工作點資訊，以便在模擬和分析中使用。工作點資訊對於理解晶體管的運作狀態和設計穩定的放大器或開關非常重要。
     */
-    virtual BiasPoint calculateQPoint(double Vcc, double Rc, double Rb) const = 0;
+
+    virtual BiasPoint calculateQPoint(const BiasParams& params) const = 0;
+
+
+    //virtual BiasPoint calculateQPoint(double Vcc, double Rc, double Rb) const = 0;
+
+    //virtual BiasPoint calculateQPoint(double Vdd, double Rd,
+    //                                  double biasParam,
+    //                                  BiasConfig config) const=0;
 };
 
 

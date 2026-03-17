@@ -69,6 +69,11 @@
 * @see Transistor
 * @see BJT
 * */
+/**
+ * Transistor       -+
+ * CurveDrawable     | MOSFET
+ */
+
 class MOSFET : public Transistor,public CurveDrawable{
 
 public:
@@ -283,6 +288,19 @@ public:
     */
     std::vector<Point> transferCurve(double Vds) const;  // 給定 Vds 的轉移曲線
 
+
+    // MOSFET 特有的方法（可選）
+    /**
+    * @brief transferCurve(double Vds, double Vgs_start, double Vgs_end) const;
+    * @brief 產生轉移特性曲線（Id vs Vgs）給定 Vds
+    * @param Vds 汲極-源極電壓，這個參數用於生成特定 Vds 下的 Id vs Vgs 曲線
+    * @param Vgs_start
+    * @param Vgs_end
+    * @details 這個方法是 MOSFET 類別特有的方法，用於生成在給定 Vds 的條件下，Id 隨 Vgs 變化的轉移特性曲線。這個方法允許使用者在特定的 Vds 條件下分析 MOSFET 的轉移特性，這對於設計和模擬電路非常有用。
+               使用者可以通過這個方法來獲取在特定 Vds 下的轉移特性曲線，以便在模擬和分析中使用。這些曲線對於理解 MOSFET 的行為和設計電路非常重要，特別是在開關應用中。
+    */
+    std::vector<Point> transferCurve(double Vds, double Vgs_start, double Vgs_end) const;
+
     // 工作點計算
     //回傳型別 函式名稱(參數列表) [const] [override] [final] = 0;
     /**
@@ -294,7 +312,11 @@ public:
     * @details 這個方法用於計算 MOSFET 的工作點（Bias Point），根據給定的電源電壓 Vdd、汲極負載電阻 Rd 和閘極電阻 Rg 來計算 MOSFET 在這些條件下的 Id 和 Vds。方法會考慮 MOSFET 的特性曲線和工作區域來確定最終的工作點。
 			   使用者可以通過這個方法來獲取在特定電源和負載條件下的 MOSFET 工作點，以便在模擬和分析中使用。這些工作點對於理解 MOSFET 的行為和設計電路非常重要。
     */
-    BiasPoint calculateQPoint(double Vdd, double Rd, double Rg = 0) const override;
+
+    BiasPoint calculateQPoint(const BiasParams& params) const override;
+    BiasPoint calculateQPoint_FixedVgs(double Vdd, double Rd, double Vgs) const;
+
+
 
     // 找點功能
     /**

@@ -155,7 +155,7 @@ public:
 	* @details 這個方法根據給定的電源電壓 Vcc、集極電阻 Rc 和基極電阻 Rb 計算 BJT 的工作點，返回一個 BiasPoint 結構，
     *          其中包含 Vce、Ic、Ib 等資訊。這個方法會考慮 BJT 的特性來確定工作點是否在主動區、飽和區或截止區，並相應地計算 Ib 和 Ic 的值。
     */
-    BiasPoint calculateQPoint(double Vcc, double Rc, double Rb) const override;
+    //BiasPoint calculateQPoint(double Vcc, double Rc, double Rb) const override;
 
     // 找點功能
     /**

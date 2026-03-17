@@ -210,6 +210,7 @@ std::vector<Point> BJT::inputCurve() const
 }
 
 // 工作點計算
+/*
 BiasPoint BJT::calculateQPoint(double Vcc, double Rc, double Rb) const
 {
     BiasPoint bp;
@@ -242,7 +243,7 @@ BiasPoint BJT::calculateQPoint(double Vcc, double Rc, double Rb) const
 
     return bp;
 }
-
+*/
 // 找點功能
 double BJT::findIbFromIc(double Ic, double Vce) const
 {
