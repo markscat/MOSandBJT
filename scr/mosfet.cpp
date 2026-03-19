@@ -924,6 +924,7 @@ double MOSFET::calculateTurnOffDelay(double Vgs, double Rg) const
 void MOSFET::setCurvePoints(int points) {
     m_curvePoints = points;
 }
+
 int MOSFET::getCurvePoints() const {
     return m_curvePoints;
 }
@@ -935,6 +936,120 @@ std::vector<Point> MOSFET::generateCurve(double inputParam) const {
     /*mosfet.h:429:12: Use of undeclared identifier 'outputCurve'
      */
 }
+
+// 在 mosfet.cpp 中加入
+
+void MOSFET::setCapacitancesFromDatasheet(double Ciss, double Coss, double Crss)
+{
+    // 從規格書參數反推個別電容
+    // Ciss = Cgs + Cgd
+    // Coss = Cds + Cgd
+    // Crss = Cgd
+
+    m_Cgd = Crss;                    // 米勒電容直接是 Crss
+    m_Cgs = Ciss - Crss;              // Cgs = Ciss - Crss
+    m_Cds = Coss - Crss;              // Cds = Coss - Crss
+
+    // 確保不為負（數值誤差保護）
+    if (m_Cgs < 0.0) {
+        m_Cgs = 0.0;
+    }
+    if (m_Cds < 0.0) {
+        m_Cds = 0.0;
+    }
+}
+
+void MOSFET::setVoltageDependentCapacitances(
+    double Ciss_0, double Coss_0, double Crss_0,
+    double Vds_ref)
+{
+    // 先用基本公式設定
+    setCapacitancesFromDatasheet(Ciss_0, Coss_0, Crss_0);
+
+    // 這裡可以儲存參考電壓和電容值，供 getCapacitances 使用
+    // 但目前 getCapacitances 用的是簡化模型
+    // 如果需要精確的電壓相依性，需要擴充 getCapacitances
+
+    // 簡單起見，先不做複雜處理
+    // 未來可以擴充成員變數：
+    // m_Ciss_0 = Ciss_0;
+    // m_Coss_0 = Coss_0;
+    // m_Crss_0 = Crss_0;
+    // m_Vds_ref = Vds_ref;
+}
+
+// 飽和區 Id 計算
+double MOSFET::calculateId_saturation(double Vgs, double Vds) const
+{
+    // 處理極性
+    double effectiveVgs = Vgs;
+    double effectiveVds = Vds;
+    double effectiveVth = m_Vth;
+
+    if (!m_isNChannel) {
+        effectiveVgs = -Vgs;
+        effectiveVds = -Vds;
+        effectiveVth = -m_Vth;
+    }
+
+    // 檢查是否截止
+    if (effectiveVgs <= effectiveVth) return 0.0;
+
+    double Vgs_eff = effectiveVgs - effectiveVth;
+    double Id = m_Kn * Vgs_eff * Vgs_eff * (1.0 + m_lambda * effectiveVds);
+
+    // 限制電流
+    if (Id > m_Id_max) Id = m_Id_max;
+
+    return m_isNChannel ? Id : -Id;
+}
+
+// 三極管區 Id 計算
+double MOSFET::calculateId_triode(double Vgs, double Vds) const
+{
+    // 處理極性
+    double effectiveVgs = Vgs;
+    double effectiveVds = Vds;
+    double effectiveVth = m_Vth;
+
+    if (!m_isNChannel) {
+        effectiveVgs = -Vgs;
+        effectiveVds = -Vds;
+        effectiveVth = -m_Vth;
+    }
+
+    // 檢查是否截止
+    if (effectiveVgs <= effectiveVth) return 0.0;
+    if (effectiveVds <= 0.0) return 0.0;
+
+    double Vgs_eff = effectiveVgs - effectiveVth;
+    double Id = m_Kn * (2.0 * Vgs_eff * effectiveVds - effectiveVds * effectiveVds);
+
+    // 限制電流
+    if (Id > m_Id_max) Id = m_Id_max;
+
+    return m_isNChannel ? Id : -Id;
+}
+
+// 飽和區起始電壓計算
+double MOSFET::calculateVds_saturation(double Vgs) const
+{
+    // 處理極性
+    double effectiveVgs = Vgs;
+    double effectiveVth = m_Vth;
+
+    if (!m_isNChannel) {
+        effectiveVgs = -Vgs;
+        effectiveVth = -m_Vth;
+    }
+
+    if (effectiveVgs <= effectiveVth) return 0.0;
+
+    double Vds_sat = effectiveVgs - effectiveVth;
+
+    return m_isNChannel ? Vds_sat : -Vds_sat;
+}
+
 
 QString MOSFET::deviceType() const {
     return "MOSFET";

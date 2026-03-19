@@ -136,6 +136,20 @@ public:
     std::vector<Point> transferCurve(double Vce) const;  // 給定 Vce 的轉移曲線
 
     /**
+    * @brief transferCurve(double Vce,double Ib_start, double Ib_end) const;
+    * @brief 產生 BJT 的轉移特性曲線，給定 Vce
+    * @param Vce 集極-射極電壓，這個參數用於生成特定 Vce 下的 Ib vs Ic 曲線
+    * @param Ib_start Ib起始電流
+    * @param Ib_end   Ib結束電流
+    * @return std::vector<Point> 包含轉移特性曲線點的列表
+    * @param Vce 集極-射極電壓，這個參數用於生成特定 Vce 下的 Ib vs Ic 曲線
+    * @details 這個方法根據給定的集極-射極電壓 Vce 產生 BJT 的轉移特性曲線，返回一個包含 Point 結構的列表，每個 Point 包含 Ib 和對應的 Ic 值。
+    *          這個曲線可以用於分析 BJT 在不同 Vce 下的增益和工作狀態，例如在主動區和飽和區之間的轉換。
+    */
+    std::vector<Point> transferCurve(double Vce, double Ib_start, double Ib_end) const;
+
+
+    /**
 	* @brief inputCurve() const;
 	* @brief 產生 BJT 的輸入特性曲線
 	* @return std::vector<Point> 包含輸入特性曲線點的列表
@@ -148,14 +162,13 @@ public:
     /**
 	* @brief calculateQPoint(double Vcc, double Rc, double Rb) const override;
 	* @brief 計算 BJT 的工作點（Bias Point）
-	* @param Vcc 電源電壓
-	* @param Rc 集極電阻
-	* @param Rb 基極電阻
+    * @brief params 包含了Vcc 電源電壓,Rc 射極電阻,Ib基極電流,
 	* @return BiasPoint 包含工作點資訊的結構
 	* @details 這個方法根據給定的電源電壓 Vcc、集極電阻 Rc 和基極電阻 Rb 計算 BJT 的工作點，返回一個 BiasPoint 結構，
     *          其中包含 Vce、Ic、Ib 等資訊。這個方法會考慮 BJT 的特性來確定工作點是否在主動區、飽和區或截止區，並相應地計算 Ib 和 Ic 的值。
     */
-    //BiasPoint calculateQPoint(double Vcc, double Rc, double Rb) const override;
+    BiasPoint calculateQPoint(const BiasParams& params) const override;
+
 
     // 找點功能
     /**
@@ -173,6 +186,7 @@ public:
     double findIbFromIc(double Ic, double Vce) const;   // 給 Ic 找 Ib
     double findIcFromIb(double Ib, double Vce) const;   // 給 Ib 算 Ic
     double findVceFromIc(double Ic, double Ib) const;   // 給 Ic 找 Vce
+
 
     // 設定曲線取點數量
     /**
@@ -287,6 +301,16 @@ private:
 			   這個方法可以幫助使用者從已知的基極電流值推算出對應的基極-射極電壓，這在分析 BJT 的輸入特性和工作點時非常有用。
     */
     double calculateVbeFromIb(double Ib) const;               // 從 Ib 算 Vbe
+
+
+    BiasPoint calculateQPoint_FixedIb(double Vcc, double Rc, double Ib) const;
+
+    BiasPoint calculateQPoint_VoltageDivider(double Vcc, double Rc, double Re, double R1, double R2) const;
+
+    //BiasPoint calculateQPoint_FourResistor(double Vcc, double Rc, double Re, double R1, double R2);
+    BiasPoint calculateQPoint_FourResistor(double Vcc, double Rc, double Re, double R1, double R2) const;
+
+
 };
 
 #endif // BJT_H

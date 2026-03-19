@@ -91,7 +91,7 @@ template<typename DeviceType> QVector<UICurveData> generateOutputCurves(
         }
         label = label_prefix + QString::number(param) + unit;
         */
-        curves.append(UICurveData(qtPoints, label));
+
     }
 
     return curves;
