@@ -8,6 +8,9 @@
 #include <QVector>
 #include <QPointF>
 #include <QString>
+#include <QDebug>
+
+
 
 //------------------------------------------------------------------------------
 // 核心用的結構（不依賴 Qt）
@@ -67,8 +70,6 @@ template<typename DeviceType> QVector<UICurveData> generateOutputCurves(
     curves.reserve(param_list.size());
 
     for (double param : param_list) {
-
-
         // 呼叫 device 的 outputCurve()，回傳 std::vector<Point>
         auto stlPoints = device.outputCurve(param);
 
@@ -93,6 +94,7 @@ template<typename DeviceType> QVector<UICurveData> generateOutputCurves(
         */
 
     }
+    qDebug() << "generateOutputCurves returning" << curves.size() << "curves";
 
     return curves;
 }

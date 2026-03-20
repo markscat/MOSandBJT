@@ -130,7 +130,7 @@ std::vector<Point> MOSFET::outputCurve(double Vgs) const
 
         if (absVds < Vds_sat) {
             // 三極管區 (線性區)
-            // Id = Kn * [2(Vgs - Vth)Vds - Vds²]
+            // 公式：Id = Kn * [2(Vgs - Vth)Vds - Vds²]
             Id = m_Kn * (2.0 * Vgs_eff * absVds - absVds * absVds);
 
             // 在非常小的 Vds 時，可以用 Rds_on 來近似（如果有的話）
@@ -139,10 +139,9 @@ std::vector<Point> MOSFET::outputCurve(double Vgs) const
             }
         } else {
             // 飽和區
-            // Id = Kn * (Vgs - Vth)² * (1 + λ * Vds)
+            // 公式：Id = Kn * (Vgs - Vth)² * (1 + λ * Vds)
             Id = m_Kn * Vgs_eff * Vgs_eff * (1.0 + m_lambda * absVds);
         }
-
 
         // 限制電流不超過 Id_max
         if (Id > m_Id_max) Id = m_Id_max;
@@ -154,39 +153,6 @@ std::vector<Point> MOSFET::outputCurve(double Vgs) const
 
         points.push_back(Point(Vds, Id));
     }
-
-    /*
-
-    // 如果 Vgs < Vth，電晶體截止，Id = 0
-    if (Vgs <= m_Vth) {
-        points.push_back(Point(0, 0));
-        points.push_back(Point(m_Vds_max, 0));
-        return points;
-    }
-
-    //double Vds_sat = Vgs - m_Vth;  // 飽和區起始電壓
-
-    // 從 0 到 Vds_max 取 100 個點
-    for (int i = 0; i <= m_curvePoints; i++) {
-        double Vds = (i /(double)m_curvePoints) * m_Vds_max;
-        double Id = 0;
-
-        if (Vds < Vds_sat) {
-            // 三極管區
-            Id = m_Kn * (2 * (Vgs - m_Vth) * Vds - Vds * Vds);
-        } else {
-            // 飽和區
-
-            Id = m_Kn * (Vgs - m_Vth) * (Vgs - m_Vth) * (1 + m_lambda * Vds);
-        }
-
-        // 限制電流不超過 Id_max
-        if (Id > m_Id_max) Id = m_Id_max;
-
-        points.push_back(Point(Vds, Id));
-
-    }
-*/
     return points;
 }
 
@@ -340,6 +306,7 @@ double MOSFET::findVdsFromId(double Id, double Vgs) const
 
 double MOSFET::findVdsFromId(double Id, double Vgs) const
 {
+    //判斷是哪一類型的MOS，以及後續處理
     // 處理 P-channel 的極性
     double effectiveId = Id;
     double effectiveVgs = Vgs;
@@ -353,6 +320,7 @@ double MOSFET::findVdsFromId(double Id, double Vgs) const
         effectiveVds_max = -m_Vds_max; // P-channel Vds_max 為負，轉成正的
     }
 
+    //判斷目前狀況
     // 檢查輸入是否合理
     if (effectiveId < 0.0) {
         // 經過極性轉換後，Id 不該是負的

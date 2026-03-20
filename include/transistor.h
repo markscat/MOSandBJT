@@ -42,14 +42,18 @@ struct Point {
 
 /**
 * @brief BiasPoint 結構，用於表示晶體管的工作點（Q Point）
+*
+* bjt
 * @param Vce BJT 的集電極-發射極電壓，或 MOSFET 的汲極-源極電壓
 * @param Ic BJT 的集電極電流，或 MOSFET 的漏極電流
 * @param Ib BJT 的基極電流，MOSFET 沒有基極電流，這裡可以設為 0
+*
+* mos
 * @param Vds MOSFET 的汲極-源極電壓，BJT 沒有這個參數，可以設為 0
 * @param Id MOSFET 的漏極電流，BJT 沒有這個參數，可以設為 0
 * @param Vgs MOSFET 的閘極-源極電壓，BJT 沒有這個參數，可以設為 0
+*
 * @param valid 工作點是否有效，當計算失敗或參數不合理時設為 false
-* @return BiasPoint 結構，包含工作點的電壓和電流值，以及有效性標誌
 * @details BiasPoint 結構包含了晶體管的工作點（Q Point）相關的電壓和電流值，以及一個有效性標誌。對於 BJT，Vce、Ic 和 Ib 是主要的參數，
                      而對於 MOSFET，Vds、Id 和 Vgs 是主要的參數。當計算工作點時，如果參數不合理或計算失敗，valid 會被設置為 false，以便使用者知道工作點無效。
 */

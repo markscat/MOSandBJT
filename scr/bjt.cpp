@@ -480,46 +480,8 @@ std::vector<Point> BJT::inputCurve() const
 
         points.push_back(Point(Vbe, Ib));
     }
-
-
-/*
-    for (int i = 0; i <= m_curvePoints; i++) {
-        double progress = i / (double)m_curvePoints;
-        double Vbe = Vbe_start + progress * (Vbe_end - Vbe_start);
-
-        double Ib = 0.0;
-
-        // 處理極性
-        double effectiveVbe = (m_isNPN) ? Vbe : -Vbe;
-
-        if (effectiveVbe > m_Vbe_on) {
-            // 二極體公式：Ib = Is × (e^(Vbe/VT) - 1)
-            // 這裡用 effectiveVbe - Vbe_on 是因為 Vbe_on 是導通電壓
-            double exponent = (effectiveVbe - m_Vbe_on) / VT;
-
-            // 防止指數爆炸（可選）
-            if (exponent > 100.0) {
-                exponent = 100.0;
-            }
-            double Ib_mag = m_Is * (exp(exponent) - 1.0);
-
-            // 根據極性調整方向
-            if (m_isNPN) {
-                Ib = Ib_mag;
-            } else {
-                Ib = -Ib_mag;
-            }
-        }
-
-        points.push_back(Point(Vbe, Ib));
-    }
-*/
     return points;
 }
-
-
-/*
-*/
 
 // 工作點計算
 
@@ -590,6 +552,7 @@ BiasPoint BJT::calculateQPoint_FixedIb(double Vcc, double Rc, double Ib) const
     // 檢查電阻值
     if (Rc <= 0.0 || Ib <= 0.0) {
         return bp;
+
     }
 
     // 假設工作在主動區
@@ -874,77 +837,6 @@ double BJT::findVceFromIc(double Ic, double Ib) const
         }
     }
 }
-
-
-
-/*
- *
- * std::vector<Point> BJT::inputCurve() const
-{
-    std::vector<Point> points;
-    points.reserve(m_curvePoints + 1);
-
-    // 從 0 到 1V
-    for (int i = 0; i <= m_curvePoints; i++) {
-        double Vbe = (i / (double)m_curvePoints) * 1.0;
-        double Ib = 0;
-
-        if (Vbe > m_Vbe_on) {
-            // 二極體公式近似
-            Ib = m_Is * (exp((Vbe - m_Vbe_on) / 0.026) - 1.0);
-        }
-
-        points.push_back(Point(Vbe, Ib));
-    }
-
-    return points;
-}
-
-double BJT::findIcFromIb(double Ib, double Vce) const
-{
-    if (Ib <= 0) return 0;
-
-    if (Vce > m_Vce_sat) {
-        // 主動區
-        return m_Beta * Ib * (1.0 + Vce / m_Va);
-    } else {
-        // 飽和區
-        return m_Beta * Ib * (Vce / m_Vce_sat);
-    }
-}
-
-double BJT::findVceFromIc(double Ic, double Ib) const
-{
-    if (Ib <= 0 || Ic <= 0) return 0;
-
-    // 從主動區公式反推
-    // Ic = Beta * Ib * (1 + Vce / Va)
-    // => Vce = (Ic / (Beta * Ib) - 1) * Va
-
-    double ratio = Ic / (m_Beta * Ib);
-    if (ratio < 1.0) {
-        // 可能在飽和區
-        return m_Vce_sat * (Ic / (m_Beta * Ib));
-    } else {
-        // 主動區
-        return (ratio - 1.0) * m_Va;
-    }
-}
-
-
-double BJT::findIbFromIc(double Ic, double Vce) const
-{
-    if (Ic <= 0) return 0;
-
-    if (Vce > m_Vce_sat) {
-        // 主動區
-        return Ic / (m_Beta * (1.0 + Vce / m_Va));
-    } else {
-        // 飽和區
-        return Ic / (m_Beta * (Vce / m_Vce_sat));
-    }
-}
-*/
 
 std::vector<Point> BJT::generateCurve(double inputParam) const
 {
