@@ -124,12 +124,13 @@ void MOSandBJT::initializeTransistors()
     // 建立 MOSFET 並設定預設值
     m_mosfet = new MOSFET();
     m_mosfet->setParameter("Vth", 2.0);
-    m_mosfet->setParameter("Kn", 0.1);
     m_mosfet->setParameter("lambda", 0.01);
     m_mosfet->setParameter("Rds_on", 0.1);
     m_mosfet->setParameter("gfs", 1.0);
     m_mosfet->setParameter("Id_max", 10.0);
     m_mosfet->setParameter("Vds_max", 100.0);
+
+    m_mosfet->setParameter("kn",m_mosfet.calculateKnFromRds(vgs));
 
     // 建立 BJT 並設定預設值（先保留，以後再用）
     m_bjt = new BJT();

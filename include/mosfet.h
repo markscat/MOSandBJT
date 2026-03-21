@@ -451,6 +451,13 @@ private:
 			   使用者可以通過這個方法來獲取在特定 Vgs 條件下的飽和區 Vds 起始電壓，以便在模擬和分析中使用。這些值對於理解 MOSFET 的行為和設計電路非常重要。
     */
     double calculateVds_saturation(double Vgs) const;  // 飽和區起始電壓
+
+
+    // 根據規格書參數反推 Kn
+    // rdsOn: 導通電阻 (Ohm)
+    // vgsAtRds: 規格書測量該 Rds 時所用的 Vgs 電壓 (V)
+    // vth: 臨界電壓 (V)
+    double calculateKnFromRds(double rdsOn, double vgsAtRds, double vth);
 };
 
 

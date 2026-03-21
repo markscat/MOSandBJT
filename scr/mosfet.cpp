@@ -216,6 +216,31 @@ std::vector<Point> MOSFET::transferCurve(double Vds, double Vgs_start, double Vg
     return points;
 }
 
+double MOSFET::calculateKnFromRds(double rdsOn, double vgsAtRds, double vth)
+{
+    // 1. 安全檢查：避免除以零
+    if (rdsOn <= 0.0) {
+        return 0.0;
+    }
+
+    // 2. 計算過驅動電壓 (Overdrive Voltage)
+    double vov = vgsAtRds - vth;
+
+    // 3. 安全檢查：確保測試電壓高於開啟電壓
+    if (vov <= 0.0) {
+        // 如果 Vgs <= Vth，電晶體未導通，無法計算 Kn
+        return 0.0;
+    }
+
+    // 4. 套用公式反推 Kn
+    // 公式來源：Rds(on) = 1 / [2 * Kn * (Vgs - Vth)]
+    double kn = 1.0 / (2.0 * rdsOn * vov);
+
+    return kn;
+}
+
+
+
 
 // 工作點計算
 
@@ -445,6 +470,11 @@ double MOSFET::findVdsFromId(double Id, double Vgs) const
     }
 }
 #endif
+
+
+
+
+
 
 #ifdef findVgsFromId_short_Version
 double MOSFET::findVgsFromId(double Id, double Vds) const
