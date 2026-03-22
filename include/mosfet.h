@@ -375,6 +375,16 @@ public:
     QString inputUnit() const override;
 
 
+
+    // 根據規格書參數反推 Kn
+    // rdsOn: 導通電阻 (Ohm)
+    // vgsAtRds: 規格書測量該 Rds 時所用的 Vgs 電壓 (V)
+    // vth: 臨界電壓 (V)
+    double calculateKnFromRds(double rdsOn, double vgsAtRds, double vth);
+
+    static double calculateGfsFromRds(double rdsOn_Ohm);
+
+
 private:
 
     /**
@@ -453,11 +463,6 @@ private:
     double calculateVds_saturation(double Vgs) const;  // 飽和區起始電壓
 
 
-    // 根據規格書參數反推 Kn
-    // rdsOn: 導通電阻 (Ohm)
-    // vgsAtRds: 規格書測量該 Rds 時所用的 Vgs 電壓 (V)
-    // vth: 臨界電壓 (V)
-    double calculateKnFromRds(double rdsOn, double vgsAtRds, double vth);
 };
 
 

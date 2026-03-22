@@ -1,12 +1,13 @@
 // mosandbjt.cpp
 #include "ui/ui_mosandbjt.h"
+//mosandbjt.cpp:2:10: In included file: 'plotcanvas.h' file not found
+//ui_mosandbjt.h:27:10: error occurred here
 #include "../ui/numkeyboard.h"
 #include "../ui/mosandbjt.h"
 #include "../include/mosfet.h"
 #include "../include/bjt.h"
-//#include "../qcustomplot.h"
 #include "curve_utils.h"
-
+#include "plotcanvas.h"
 
 #include <QPainter>
 #include <QPainterPath>
@@ -123,14 +124,26 @@ void MOSandBJT::initializeTransistors()
 
     // 建立 MOSFET 並設定預設值
     m_mosfet = new MOSFET();
+
     m_mosfet->setParameter("Vth", 2.0);
     m_mosfet->setParameter("lambda", 0.01);
     m_mosfet->setParameter("Rds_on", 0.1);
     m_mosfet->setParameter("gfs", 1.0);
     m_mosfet->setParameter("Id_max", 10.0);
     m_mosfet->setParameter("Vds_max", 100.0);
+    m_mosfet->setParameter("kn",0.1);
 
-    m_mosfet->setParameter("kn",m_mosfet.calculateKnFromRds(vgs));
+
+
+    // 將 MOSFET 建構子內的預設物理參數搬到 UI
+    ui->Vth_lineEdit->setText(QString::number(m_mosfet->getParameter("Vth")));
+    ui->Kn_lineEdit->setText(QString::number(m_mosfet->getParameter("Kn")));
+    ui->Lmpda_lineEdit->setText(QString::number(m_mosfet->getParameter("lambda")));
+
+    // 補上 Rds(on) 的 UI 顯示（例如建構子是 0.1 Ohm，UI 顯示 100 mOhm）
+    ui->Rds_lineEdit->setText(QString::number(m_mosfet->getParameter("Rds_on") * 1000.0));
+
+
 
     // 建立 BJT 並設定預設值（先保留，以後再用）
     m_bjt = new BJT();
@@ -248,6 +261,14 @@ void MOSandBJT::setupConnections()
     // 頁籤切換連線
     connect(ui->tabWidget, &QTabWidget::currentChanged,
             this, &MOSandBJT::on_tabWidget_currentChanged);
+
+
+    // 當 Vth 或 Rds(on) 輸入完成時，觸發自動換算
+    connect(ui->Vth_lineEdit, &QLineEdit::editingFinished,
+            this, &MOSandBJT::on_mosfetParameter_changed);
+    connect(ui->Rds_lineEdit, &QLineEdit::editingFinished,
+            this, &MOSandBJT::on_mosfetParameter_changed);
+
 }
 
 
@@ -405,7 +426,7 @@ void MOSandBJT::loadMosfetParameters()
 
     // Vth
     double vth = ui->Vth_lineEdit->text().toDouble(&ok);
-    if (ok) m_mosfet->setParameter("Vth", vth);
+    if (ok) m_mosfet->setParameter("Vth", vth);   
 
     // Kn
     double kn = ui->Kn_lineEdit->text().toDouble(&ok);
@@ -566,66 +587,6 @@ void MOSandBJT::paintEvent(QPaintEvent *event)
     }
 }
 
-/*
-void MOSandBJT::plotMosfetCurves()
-{
-    if (!m_plot) return;
-
-    // 清除舊的曲線
-    clearPlot();
-
-    // 產生參數列表
-    QVector<double> paramList;
-
-    if (m_isOutputCurve) {
-        // 輸出特性：多條 Vgs 曲線
-        paramList = generateParamList(2.0, 5.0, 4);  // Vgs = 2V, 3V, 4V, 5V
-
-        // 產生曲線
-        QVector<UICurveData> curves = generateOutputCurves(*m_mosfet, paramList);
-
-        // 繪製曲線
-        for (const auto& curve : curves) {
-            QCPGraph *graph = m_plot->addGraph();
-
-
-            graph->setData(curve.points);
-
-
-            graph->setName(curve.label);
-            graph->setPen(QPen(Qt::blue));
-            m_curveGraphs.append(graph);
-        }
-
-        // 設定範圍
-        m_plot->xAxis->setRange(0, m_mosfet->getParameter("Vds_max"));
-        m_plot->yAxis->setRange(0, m_mosfet->getParameter("Id_max"));
-
-    } else {
-        // 轉移特性：單一條 Vds 曲線
-        double vds = 10.0;  // 固定 Vds = 10V
-        std::vector<Point> points = m_mosfet->transferCurve(vds);
-
-        QCPGraph *graph = m_plot->addGraph();
-        graph->setData(toQtPoints(points));
-        graph->setName(QString("Vds = %1V").arg(vds));
-        graph->setPen(QPen(Qt::red));
-        m_curveGraphs.append(graph);
-
-        // 設定範圍
-        m_plot->xAxis->setRange(0, 5);  // Vgs 0~5V
-        m_plot->yAxis->setRange(0, m_mosfet->getParameter("Id_max"));
-    }
-
-    // 加入圖例
-    m_plot->legend->setVisible(true);
-    m_plot->legend->setFont(QFont("Microsoft JhengHei", 8));
-
-    // 重繪
-    m_plot->replot();
-}
-*/
-
 
 void MOSandBJT::plotBjtCurves()
 {
@@ -722,7 +683,36 @@ QString MOSandBJT::formatWorkPoint(double value, const QString& unit) const
     }
 }
 
+void MOSandBJT::on_mosfetParameter_changed()
+{
+    bool okVth, okRds;
+    double vth = ui->Vth_lineEdit->text().toDouble(&okVth);
+    double rds_mOhm = ui->Rds_lineEdit->text().toDouble(&okRds);
 
+    // 預設規格書測試時的 Vgs 電壓為 10V (一般常用值)
+    double vgs_test = 10.0;
+
+    // 驗證守門員：確保兩個數字都成功轉換為 double
+    if (okVth) {
+        if (okRds) {
+            // 單位換算：mOhm 轉成 Ohm
+            double rds_Ohm = rds_mOhm / 1000.0;
+
+            // 呼叫你已經寫在 MOSFET 裡的演算法
+            double calculatedKn = m_mosfet->calculateKnFromRds(rds_Ohm, vgs_test, vth);
+
+            // 安全檢查：只有結果大於 0 且有效才填入
+            if (calculatedKn > 0.0) {
+                // 將計算結果填入介面，取小數點後 4 位
+                ui->Kn_lineEdit->setText(QString::number(calculatedKn, 'f', 4));
+            }
+
+            // 同步算出 gfs 並更新 UI
+            double calculatedGfs_S = 1.0 / rds_Ohm; // 簡化邏輯：gfs = 1/Rds
+            ui->gfs_lineEdit->setText(QString::number(calculatedGfs_S * 1000.0, 'f', 2));
+        }
+    }
+}
 
 
 

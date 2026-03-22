@@ -234,11 +234,27 @@ double MOSFET::calculateKnFromRds(double rdsOn, double vgsAtRds, double vth)
 
     // 4. 套用公式反推 Kn
     // 公式來源：Rds(on) = 1 / [2 * Kn * (Vgs - Vth)]
+    // Kn(Vge-Vth) =1/(Rds(on)*2)
+    // Kn=1/(2* Rds(on)* (Vgs -Vth))
     double kn = 1.0 / (2.0 * rdsOn * vov);
 
     return kn;
 }
 
+
+// 在 mosfet.cpp 實作
+double MOSFET::calculateGfsFromRds(double rdsOn_Ohm)
+{
+    // 安全檢查：電阻必須大於 0 才能計算倒數
+    if (rdsOn_Ohm <= 0.0) {
+        return 0.0;
+    }
+
+    // 在當前的二階模型中，gfs = 1 / Rds(on)
+    double gfs = 1.0 / rdsOn_Ohm;
+
+    return gfs;
+}
 
 
 

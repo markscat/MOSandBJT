@@ -43,6 +43,9 @@ private slots:
     void onNumpadEqualPressed(QString expression);
     void onNumpadClosed();
 
+    void on_mosfetParameter_changed(); // 處理 Vth 或 Rds(on) 的連動換算
+
+
 private:
     // 初始化相關
     void initializeTransistors();
@@ -66,6 +69,7 @@ private:
     void calculateBjtQPoint();
     double findCurrentFromVoltage(double voltage) const;
     double findVoltageFromCurrent(double current) const;
+
 
     // 工具函式
     QString formatWorkPoint(double value, const QString& unit) const;
@@ -126,42 +130,3 @@ protected:
 
 
 
-
-
-
-
-
-
-/*
-#ifndef MOSANDBJT_H
-#define MOSANDBJT_H
-
-#include <QMainWindow>
-#include "numkeyboard.h"
-
-
-QT_BEGIN_NAMESPACE
-namespace Ui {
-class MOSandBJT;
-}
-QT_END_NAMESPACE
-
-class MOSandBJT : public QMainWindow
-{
-    Q_OBJECT
-
-public:
-    MOSandBJT(QWidget *parent = nullptr);
-    ~MOSandBJT();
-
-private slots:
-
-
-
-private:
-
-
-    Ui::MOSandBJT *ui;
-};
-#endif // MOSANDBJT_H
-*/

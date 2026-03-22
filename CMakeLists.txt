@@ -43,11 +43,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         include/File_save.h
         scr/File_save.cpp
         ui/cauverdrawable.h
-
-
-
-
-
+        ui/plotcanvas.cpp
+        ui/plotcanvas.h
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET MOSandBJT APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -103,3 +100,6 @@ install(TARGETS MOSandBJT
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(MOSandBJT)
 endif()
+
+target_include_directories(MOSandBJT PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ui)
+
