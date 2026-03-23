@@ -714,9 +714,6 @@ void MOSandBJT::on_mosfetParameter_changed()
     }
 }
 
-
-
-
 MOSandBJT::~MOSandBJT()
 {
     delete ui;

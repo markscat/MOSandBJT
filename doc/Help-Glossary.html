@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=big5">
+    <style>
+    body { font-family: 'Microsoft JhengHei', sans-serif; line-height: 1.5; color: #333; max-width: 800px; margin: 20px auto; }
+    h2 { color: #2c3e50; border-bottom: 2px solid #2980b9; padding-bottom: 8px; margin-top: 30px; }
+    h3 { color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px; }
+    b { color: #e74c3c; } /* 強調關鍵字使用紅色 */
+    .unit { color: #2980b9; font-weight: bold; }
+    .box { background-color: #f9f9f9; border-left: 4px solid #3498db; padding: 12px; margin: 10px 0; font-size: 0.95em; }
+    .warning-box { background-color: #fff5f5; border-left: 4px solid #fc8181; padding: 12px; margin: 10px 0; font-size: 0.9em; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 5px; }
+    .footer-note { font-size: 0.85em; color: #7f8c8d; font-style: italic; margin-top: 20px; }
+</style>
+</head>
+<body>
+
+    <h2 style="margin-top: 0;">MOSFET 輸出特性曲線 (I<sub>D</sub> vs V<sub>DS</sub>) 區域說明</h2>
+
+    <h3>1. 三極管區 (Triode Region / Ohmic Region)</h3>
+    <p><b>位置：</b> 位於圖表的最左邊，當 V<sub>DS</sub> 較小時，曲線呈現<b>陡峭上升</b>的那一段。</p>
+    <ul>
+        <li><b>物理特性：</b> 電晶體此時表現如同一個<b>「受控的變值電阻」</b>。當 V<sub>DS</sub> 增加，電流 I<sub>D</sub> 也會隨之快速增加。</li>
+        <li><b>應用狀態：</b> 這是電晶體作為「開關」且處於<b>導通 (ON)</b> 狀態時所在的區域。</li>
+    </ul>
+    <div class="box">
+        <b>在本程式中的表現：</b><br>
+        此區域的斜率倒數即為導通電阻 R<sub>DS(on)</sub>。如果 V<sub>DS</sub> 極小，曲線幾乎呈直線。
+    </div>
+
+    <h3>2. 飽和區 (Saturation Region / Active Region)</h3>
+    <p><b>位置：</b> 位於圖表中間偏右側，曲線呈現<b>水平、平坦</b>的大片區域。</p>
+    <ul>
+        <li><b>物理特性：</b> 電晶體此時表現如同一個<b>「恆流源」</b>。電流 I<sub>D</sub> 主要受閘極電壓控制，幾乎不再隨 V<sub>DS</sub> 增加而改變。</li>
+        <li><b>應用狀態：</b> 這是電晶體作為<b>「訊號放大器」</b>時所在的核心工作區域。</li>
+    </ul>
+    <div class="box">
+        <b>在本程式中的表現：</b><br>
+        若設定通道調變參數 (λ) 為 0，則此區為完全水平線；若 λ > 0，則曲線會隨 V<sub>DS</sub> 增加而微微向上傾斜。
+    </div>
+
+    <h2>漏電流參數說明 (Leakage Current)</h2>
+
+    <h3>IDSS：汲極漏電流 (Zero Gate Voltage Drain Current)</h3>
+    <p><b>物理意義：</b> 當閘極接地 (V<sub>GS</sub> = 0V)，即電晶體處於<b>完全關閉</b>狀態時，從汲極流向源極的微小漏電流。</p>
+    <ul>
+        <li><b>測試條件：</b> 通常在 V<sub>DS</sub> 等於最大耐壓 V<sub>DSS</sub> 時測量。</li>
+        <li><b>典型數值：</b> 微安培等級 <span class="unit">(μA)</span>。</li>
+    </ul>
+    <div class="box">
+        <b>在本程式中的表現：</b><br>
+        由於特性曲線的電流座標通常以「安培 (A)」為單位，IDSS 量級極小，在繪圖時會呈現為貼近 0 的水平線，肉眼難以察覺其變化。
+    </div>
+
+    <h3>IGSS：閘極漏電流 (Gate-Body Leakage Current)</h3>
+    <p><b>物理意義：</b> 穿過閘極絕緣層（二氧化矽）的極微小電流，代表<b>閘極控制端的絕緣品質</b>。</p>
+    <ul>
+        <li><b>測試條件：</b> 在 V<sub>DS</sub> = 0V，且閘極施加最大工作電壓時測量。</li>
+        <li><b>典型數值：</b> 奈安培等級 <span class="unit">(nA)</span>。</li>
+    </ul>
+    <div class="box">
+        <b>在本程式中的表現：</b><br>
+        IGSS 屬於閘極控制迴路的損耗，並非汲極電流 I<sub>D</sub> 的一部分，因此<b>完全不會影響</b>特性曲線 (I<sub>D</sub> vs V<sub>DS</sub>) 的走勢。
+    </div>
+
+    <div class="warning-box">
+        <b>重要提示：</b><br>
+        MOSFET 的「飽和區」術語與 BJT 完全相反。在 BJT 中，水平區稱為「主動區」，陡峭區才稱為「飽和區」。請務必區分清楚。
+    </div>
+
+    <p class="footer-note">
+        * 註：若 IDSS 或 IGSS 數值異常過大，通常代表元件損毀、靜電擊穿或工作溫度已超出規格限制。
+    </p>
+
+</body>
+</html>
