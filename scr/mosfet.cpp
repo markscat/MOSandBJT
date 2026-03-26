@@ -87,6 +87,59 @@ bool MOSFET::validateParameters(std::string& errorMsg) const
 }
 
 // 特性曲線計算
+
+// 在 mosfet.cpp 中
+std::vector<Point> MOSFET::outputCurve(double Vgs) const
+{
+    std::vector<Point> points;
+    points.reserve(m_curvePoints + 1);
+
+    // 1. 規範化參數 (處理 P-ch 或負輸入的情況)
+    double absVgs = std::abs(Vgs);
+    double absVth = std::abs(m_Vth);
+    double absVdsMax = std::abs(m_Vds_max);
+
+    // 2. 算出飽和門檻 Vsat (即 Vgs - Vth)
+    double v_sat = absVgs - absVth;
+
+    // 守門員：如果電壓根本沒過門檻，Id 恆為 0
+    if (v_sat <= 0.0) {
+        points.push_back(Point(0, 0));
+        points.push_back(Point(absVdsMax, 0));
+        return points;
+    }
+
+    // 3. 開始跑 0 到 VdsMax 的迴圈
+    for (int i = 0; i <= m_curvePoints; i++) {
+        double vds = (i / (double)m_curvePoints) * absVdsMax;
+
+        // --- 核心大一統邏輯 ---
+        double vds_eff;
+        if (vds < v_sat) {
+            vds_eff = vds;   // 線性區
+        } else {
+            vds_eff = v_sat; // 飽和區 (卡死在上限)
+        }
+
+        // 統一公式計算 Id
+        // Id = Kn * [ 2 * Vsat * Vds_eff - Vds_eff^2 ] * (1 + lambda * Vds)
+        double id = m_Kn * (2.0 * v_sat * vds_eff - vds_eff * vds_eff) * (1.0 + m_lambda * vds);
+
+        // 限制電流不超過最大限制
+        if (id > m_Id_max) {
+            id = m_Id_max;
+        }
+
+        // 恢復極性並存點
+        if (m_isNChannel) {
+            points.push_back(Point(vds, id));
+        } else {
+            points.push_back(Point(-vds, -id));
+        }
+    }
+    return points;
+}
+/*
 std::vector<Point> MOSFET::outputCurve(double Vgs) const
 {
     std::vector<Point> points;
@@ -154,7 +207,7 @@ std::vector<Point> MOSFET::outputCurve(double Vgs) const
         points.push_back(Point(Vds, Id));
     }
     return points;
-}
+}*/
 
 // 無參數版本 - 根據通道類型選擇合理的預設 Vds
 std::vector<Point> MOSFET::transferCurve() const
@@ -216,6 +269,20 @@ std::vector<Point> MOSFET::transferCurve(double Vds, double Vgs_start, double Vg
     return points;
 }
 
+
+
+
+/**
+ *
+ * Kn : MOS 導通係數
+ * 物理公式：
+ * Kn= 1/2*μn*Cox*W/L
+ * μn: 電子遷移率 (n-channel)
+ * Cox:單位面積閘氧化層電容
+ * W:通道寬度
+ * L:通道長度
+ *
+*/
 double MOSFET::calculateKnFromRds(double rdsOn, double vgsAtRds, double vth)
 {
     // 1. 安全檢查：避免除以零
@@ -231,6 +298,27 @@ double MOSFET::calculateKnFromRds(double rdsOn, double vgsAtRds, double vth)
         // 如果 Vgs <= Vth，電晶體未導通，無法計算 Kn
         return 0.0;
     }
+
+    /*
+     * Id =Kn [2*(Vgs-Vth)Vds_eff-Vds_eff^2](1+λVds)
+     *
+     * 1.  **電壓極小：**     Vds_eff = V_ds（因為還沒達到飽和門檻）。
+     * 2.  **忽略高次方：**    V_ds^2 項太小了，直接丟掉。
+     * 3.  **忽略微小修正：**  lambda*Vds 遠小於 1，所以 1 + lambda*V_ds 趨近於 1
+     * 這樣的狀況會出現在三極管區
+     *
+     **公式演變：**
+     *   原本：I_d= Kn*[2(Vgs-V_th)Vds-Vds^2]*(1+lambda*V_ds)
+     *   if Vds<<1
+     *   1+lambda*V_ds= 1+0.0000001 約等於1
+     *   I_d= Kn*[2(Vgs-V_th)*1-1^2]*1
+     *      = Kn*(2(Vgs-V_th)*Vds)
+     *   Rds(on)=Vds/Id
+     *          = Vds/(Kn*2*(Vgs-V_th)*Vds)
+     *          = 1/(Kn*2*(Vgs-V_th))
+     *   1/Rds(on) = Kn*2*(Vgs-V_th)
+     *   Kn=(1/[2*Rds(on)*(Vgs-V_th)]
+     */
 
     // 4. 套用公式反推 Kn
     // 公式來源：Rds(on) = 1 / [2 * Kn * (Vgs - Vth)]
@@ -265,354 +353,6 @@ double MOSFET::calculateGfsFromRds(double rdsOn_Ohm)
 //#define findVdsFromId_short_Version
 
 
-#ifdef findVdsFromId_short_Version
-double MOSFET::findVdsFromId(double Id, double Vgs) const
-{
-    // TODO: 需要完整測試 N-channel 和 P-channel 的各種情況
-
-    // 處理 P-channel 的極性
-    double effectiveId = Id;
-    double effectiveVgs = Vgs;
-    double effectiveVth = m_Vth;
-
-    if (!m_isNChannel) {
-        effectiveId = -Id;           // P-channel 電流為負，轉成正的
-        effectiveVgs = -Vgs;         // P-channel Vgs 為負，轉成正的
-        effectiveVth = -m_Vth;       // P-channel Vth 為負，轉成正的
-    }
-
-    // 檢查是否截止
-    if (effectiveId <= 0.0 || effectiveVgs <= effectiveVth) {
-        return 0.0;
-    }
-
-    // 限制電流不超過 Id_max
-    if (effectiveId > m_Id_max) {
-        effectiveId = m_Id_max;
-    }
-
-    // 計算飽和區電流
-    double Id_sat = m_Kn * (effectiveVgs - effectiveVth) * (effectiveVgs - effectiveVth);
-    double Vds = 0.0;
-
-    if (effectiveId >= Id_sat) {
-        // 在飽和區：Id = Id_sat * (1 + λ * Vds)
-        // => Vds = (Id / Id_sat - 1) / λ
-        if (m_lambda > 0.0) {
-            Vds = (effectiveId / Id_sat - 1.0) / m_lambda;
-        } else {
-            // λ = 0 時，飽和區電流不隨 Vds 變化，回傳一個合理的值
-            Vds = effectiveVgs - effectiveVth;  // 至少大於飽和區起始電壓
-        }
-    } else {
-        // 在三極管區：解二次方程式
-        // Id = Kn * [2*(Vgs-Vth)*Vds - Vds^2]
-        // => Vds^2 - 2*(Vgs-Vth)*Vds + Id/Kn = 0
-
-        double a = 1.0;
-        double b = -2.0 * (effectiveVgs - effectiveVth);
-        double c = effectiveId / m_Kn;
-
-        double discriminant = b * b - 4.0 * a * c;
-        if (discriminant < 0.0) {
-            return 0.0;
-        }
-
-        // 取較小的根（三極管區的 Vds 較小）
-        Vds = (-b - std::sqrt(discriminant)) / (2.0 * a);
-
-        // 確保 Vds 不超過飽和區起始電壓
-        double Vds_sat = effectiveVgs - effectiveVth;
-        if (Vds > Vds_sat) {
-            Vds = Vds_sat;
-        }
-        if (Vds < 0.0) {
-            Vds = 0.0;
-        }
-    }
-
-    // 限制不超過 Vds_max
-    if (Vds > m_Vds_max) {
-        Vds = m_Vds_max;
-    }
-
-    // 根據通道類型返回正確極性
-    if (m_isNChannel) {
-        return Vds;
-    } else {
-        return -Vds;
-    }
-}
-#else
-
-double MOSFET::findVdsFromId(double Id, double Vgs) const
-{
-    //判斷是哪一類型的MOS，以及後續處理
-    // 處理 P-channel 的極性
-    double effectiveId = Id;
-    double effectiveVgs = Vgs;
-    double effectiveVth = m_Vth;
-    double effectiveVds_max = m_Vds_max;
-
-    if (!m_isNChannel) {
-        effectiveId = -Id;           // P-channel 電流為負，轉成正的
-        effectiveVgs = -Vgs;         // P-channel Vgs 為負，轉成正的
-        effectiveVth = -m_Vth;       // P-channel Vth 為負，轉成正的
-        effectiveVds_max = -m_Vds_max; // P-channel Vds_max 為負，轉成正的
-    }
-
-    //判斷目前狀況
-    // 檢查輸入是否合理
-    if (effectiveId < 0.0) {
-        // 經過極性轉換後，Id 不該是負的
-        return 0.0;
-    }
-
-    // 檢查是否截止
-    if (effectiveId == 0.0 || effectiveVgs <= effectiveVth) {
-        return 0.0;
-    }
-
-    // 限制電流不超過 Id_max
-    double limitedId = effectiveId;
-    if (limitedId > m_Id_max) {
-        limitedId = m_Id_max;
-    }
-
-    // 計算過驅動電壓和飽和區起始電壓
-    double Vgs_eff = effectiveVgs - effectiveVth;
-    double Vds_sat = Vgs_eff;
-
-    // 計算飽和區電流（不考慮 λ）
-    double Id_sat_base = m_Kn * Vgs_eff * Vgs_eff;
-
-    // 先假設在飽和區，考慮 λ 的影響
-    // Id = Id_sat_base * (1 + λ * Vds)
-    // 但我們不知道 Vds，所以先假設 Vds = Vds_sat
-
-    double Vds = 0.0;
-    double Id_sat_at_Vds_sat = Id_sat_base * (1.0 + m_lambda * Vds_sat);
-
-    if (limitedId >= Id_sat_at_Vds_sat) {
-        // 在飽和區，且 Vds 大於 Vds_sat
-        // Id = Id_sat_base * (1 + λ * Vds)
-        // => Vds = (Id / Id_sat_base - 1) / λ
-
-        if (m_lambda > 0.0) {
-            Vds = (limitedId / Id_sat_base - 1.0) / m_lambda;
-
-            // 確保 Vds 至少是 Vds_sat
-            if (Vds < Vds_sat) {
-                Vds = Vds_sat;
-            }
-        } else {
-            // λ = 0 時，飽和區電流不隨 Vds 變化
-            // 無法從 Id 反推 Vds，回傳 Vds_sat 作為最小可能值
-            Vds = Vds_sat;
-        }
-    } else {
-        // 可能在三極管區或飽和區邊界
-        // 先試試看是否在飽和區（Vds = Vds_sat 時，Id 應該等於 Id_sat_at_Vds_sat）
-        if (std::abs(limitedId - Id_sat_at_Vds_sat) < 1e-12) {
-            // 剛好在飽和區邊界
-            Vds = Vds_sat;
-        } else {
-            // 在三極管區，解二次方程式
-            // Id = Kn * [2*(Vgs-Vth)*Vds - Vds^2]
-            // => Vds^2 - 2*(Vgs-Vth)*Vds + Id/Kn = 0
-
-            double a = 1.0;
-            double b = -2.0 * Vgs_eff;
-            double c = limitedId / m_Kn;
-
-            double discriminant = b * b - 4.0 * a * c;
-
-            // 檢查判別式
-            if (discriminant < -1e-12) {
-                // 判別式為負，無實數解
-                return 0.0;
-            }
-            if (discriminant < 0.0) {
-                discriminant = 0.0;
-            }
-
-            double sqrt_disc = std::sqrt(discriminant);
-
-            // 兩個根：(-b ± sqrt_disc) / (2a)
-            double root1 = (-b + sqrt_disc) / (2.0 * a);
-            double root2 = (-b - sqrt_disc) / (2.0 * a);
-
-            // 在三極管區，Vds 應該小於 Vds_sat，且為正
-            // 通常 root2 較小，root1 較大
-            if (root2 >= 0.0 && root2 <= Vds_sat) {
-                Vds = root2;
-            } else if (root1 >= 0.0 && root1 <= Vds_sat) {
-                Vds = root1;
-            } else {
-                // 兩個根都不在合理範圍內
-                Vds = Vds_sat;
-            }
-        }
-    }
-
-    // 套用 Vds_max 限制
-    if (Vds > effectiveVds_max) {
-        Vds = effectiveVds_max;
-    }
-    if (Vds < 0.0) {
-        Vds = 0.0;
-    }
-
-    // 檢查計算結果是否合理：用算出的 Vds 反推 Id 應該接近輸入的 Id
-    double calculatedId = 0.0;
-    if (Vds < Vds_sat) {
-        // 三極管區
-        calculatedId = m_Kn * (2.0 * Vgs_eff * Vds - Vds * Vds);
-    } else {
-        // 飽和區
-        calculatedId = Id_sat_base * (1.0 + m_lambda * Vds);
-    }
-
-    // 如果誤差太大，可能是數值問題，回傳 0
-    if (std::abs(calculatedId - limitedId) > 0.1 * limitedId) {
-        return 0.0;
-    }
-
-    // 根據通道類型返回正確極性
-    if (m_isNChannel) {
-        return Vds;
-    } else {
-        return -Vds;
-    }
-}
-#endif
-
-
-
-
-
-
-#ifdef findVgsFromId_short_Version
-double MOSFET::findVgsFromId(double Id, double Vds) const
-{
-    // 處理 P-channel 的極性
-    double effectiveId = Id;
-    double effectiveVth = m_Vth;
-
-    if (!m_isNChannel) {
-        effectiveId = -Id;      // P-channel 電流為負，轉成正的來算
-        effectiveVth = -m_Vth;  // P-channel Vth 為負，轉成正的
-    }
-
-    // 檢查電流是否合理
-    if (effectiveId <= 0.0) {
-        return 0.0;
-    }
-
-    // 限制不超過 Id_max
-    if (effectiveId > m_Id_max) {
-        effectiveId = m_Id_max;
-    }
-
-    // 從飽和區公式反推 Vgs
-    // Id = Kn * (Vgs - Vth)^2
-    double Vgs = effectiveVth + std::sqrt(effectiveId / m_Kn);
-
-    // 根據通道類型返回正確極性
-    if (m_isNChannel) {
-        return Vgs;
-    } else {
-        return -Vgs;
-    }
-}
-#else
-double MOSFET::findVgsFromId(double Id, double Vds) const
-{
-    // 處理極性
-    double effectiveId = Id;
-    double effectiveVds = Vds;
-    double effectiveVth = m_Vth;
-
-    if (!m_isNChannel) {
-        effectiveId = -Id;
-        effectiveVds = -Vds;
-        effectiveVth = -m_Vth;
-    }
-
-    // 檢查電流是否合理
-    if (effectiveId <= 0.0) {
-        return 0.0;
-    }
-
-    // 檢查是否超過 Id_max
-    if (effectiveId > m_Id_max) {
-        effectiveId = m_Id_max;
-    }
-
-    // 先假設在飽和區，計算 Vgs
-    double Vgs = effectiveVth + std::sqrt(effectiveId / m_Kn);
-
-    // 檢查這個 Vgs 下是否真的在飽和區
-    double Vds_sat = Vgs - effectiveVth;
-
-    // 確保不超過合理範圍
-
-    if (effectiveVds >= Vds_sat) {
-        // 確實在飽和區，直接使用
-        double result = Vgs;
-
-        double Vgs_max = effectiveVth + std::sqrt(m_Id_max / m_Kn);
-
-        // 確保不超過合理範圍
-        if (result  > Vgs_max) {
-            result  = Vgs_max;
-        }
-        if (result  < effectiveVth) {
-            result  = effectiveVth;
-        }
-
-        if (m_isNChannel) {
-            return result;
-        } else {
-            return -result;
-        }
-
-    }else {
-        // 在三極管區，需要解二次方程式
-        // Id = Kn * (2*(Vgs-Vth)*Vds - Vds^2)
-        // => 2*Kn*Vds*(Vgs-Vth) = Id + Kn*Vds^2
-        // => Vgs = (Id + Kn*Vds^2) / (2*Kn*Vds) + Vth
-
-        // 避免除以零
-        if (effectiveVds <= 0.0) {
-            return 0.0;
-        }
-
-        double Vgs_triode = (effectiveId + m_Kn * effectiveVds * effectiveVds)
-                                / (2.0 * m_Kn * effectiveVds) + effectiveVth;
-
-        double result = Vgs_triode;
-
-
-        // 確保不超過合理範圍
-        double Vgs_max = effectiveVth + std::sqrt(m_Id_max / m_Kn);
-
-        if (result  > Vgs_max) {
-            result  = Vgs_max;
-        }
-        if (result  < effectiveVth) {
-            result  = effectiveVth;
-        }
-
-        if (m_isNChannel) {
-            return result;
-        } else {
-            return -result;
-        }
-    }
-
-}
-#endif
 
 /**
  * @brief 計算 MOSFET 的工作點（Q Point）
@@ -789,21 +529,333 @@ BiasPoint MOSFET::calculateQPoint_FixedVgs(double Vdd, double Rd, double Vgs) co
 
 }
 
-double MOSFET::findIdFromVgs(double Vgs, double Vds) const
+#ifdef findVdsFromId_short_Version
+double MOSFET::findVdsFromId(double Id, double Vgs) const
 {
-    // 處理 P-channel 的極性反轉
+    // TODO: 需要完整測試 N-channel 和 P-channel 的各種情況
+
+    // 處理 P-channel 的極性
+    double effectiveId = Id;
     double effectiveVgs = Vgs;
-    double effectiveVds = Vds;
     double effectiveVth = m_Vth;
 
     if (!m_isNChannel) {
-        // P-channel：輸入的 Vgs 和 Vds 都是負的
-        // 我們轉成正的來做計算
-        effectiveVgs = -Vgs;
-        effectiveVds = -Vds;
-        // Vth 在 P-channel 應該是負的，但我們用正值表示
-        effectiveVth = -m_Vth;  // 假設 m_Vth 存的是負值，轉成正的
+        effectiveId = -Id;           // P-channel 電流為負，轉成正的
+        effectiveVgs = -Vgs;         // P-channel Vgs 為負，轉成正的
+        effectiveVth = -m_Vth;       // P-channel Vth 為負，轉成正的
     }
+
+    // 檢查是否截止
+    if (effectiveId <= 0.0 || effectiveVgs <= effectiveVth) {
+        return 0.0;
+    }
+
+    // 限制電流不超過 Id_max
+    if (effectiveId > m_Id_max) {
+        effectiveId = m_Id_max;
+    }
+
+    // 計算飽和區電流
+    double Id_sat = m_Kn * (effectiveVgs - effectiveVth) * (effectiveVgs - effectiveVth);
+    double Vds = 0.0;
+
+    if (effectiveId >= Id_sat) {
+        // 在飽和區：Id = Id_sat * (1 + λ * Vds)
+        // => Vds = (Id / Id_sat - 1) / λ
+        if (m_lambda > 0.0) {
+            Vds = (effectiveId / Id_sat - 1.0) / m_lambda;
+        } else {
+            // λ = 0 時，飽和區電流不隨 Vds 變化，回傳一個合理的值
+            Vds = effectiveVgs - effectiveVth;  // 至少大於飽和區起始電壓
+        }
+    } else {
+        // 在三極管區：解二次方程式
+        // Id = Kn * [2*(Vgs-Vth)*Vds - Vds^2]
+        // => Vds^2 - 2*(Vgs-Vth)*Vds + Id/Kn = 0
+
+        double a = 1.0;
+        double b = -2.0 * (effectiveVgs - effectiveVth);
+        double c = effectiveId / m_Kn;
+
+        double discriminant = b * b - 4.0 * a * c;
+        if (discriminant < 0.0) {
+            return 0.0;
+        }
+
+        // 取較小的根（三極管區的 Vds 較小）
+        Vds = (-b - std::sqrt(discriminant)) / (2.0 * a);
+
+        // 確保 Vds 不超過飽和區起始電壓
+        double Vds_sat = effectiveVgs - effectiveVth;
+        if (Vds > Vds_sat) {
+            Vds = Vds_sat;
+        }
+        if (Vds < 0.0) {
+            Vds = 0.0;
+        }
+    }
+
+    // 限制不超過 Vds_max
+    if (Vds > m_Vds_max) {
+        Vds = m_Vds_max;
+    }
+
+    // 根據通道類型返回正確極性
+    if (m_isNChannel) {
+        return Vds;
+    } else {
+        return -Vds;
+    }
+}
+#else
+
+double MOSFET::findVdsFromId(double Id, double Vgs) const
+{
+    //判斷是哪一類型的MOS，以及後續處理
+    // 處理 P-channel 的極性
+    double effectiveId = std::abs(Id);
+    double effectiveVgs = std::abs(Vgs);
+    double effectiveVth = std::abs(m_Vth);
+    double effectiveVds_max = std::abs(m_Vds_max);
+
+    //判斷目前狀況
+
+    // 檢查是否截止
+    if (effectiveId == 0.0 || effectiveVgs <= effectiveVth) {
+        return 0.0;
+    }
+
+    // 限制電流不超過 Id_max
+    double limitedId = effectiveId;
+    if (limitedId > m_Id_max) {
+        limitedId = m_Id_max;
+    }
+
+    // 計算過驅動電壓和飽和區起始電壓
+    double Vgs_eff = effectiveVgs - effectiveVth;
+    double Vds_sat = Vgs_eff;
+
+    // 計算飽和區電流（不考慮 λ）
+    double Id_sat_base = m_Kn * Vgs_eff * Vgs_eff;
+
+    // 先假設在飽和區，考慮 λ 的影響
+    // Id = Id_sat_base * (1 + λ * Vds)
+    // 但我們不知道 Vds，所以先假設 Vds = Vds_sat
+
+    double Vds = 0.0;
+    double Id_sat_at_Vds_sat = Id_sat_base * (1.0 + m_lambda * Vds_sat);
+
+    if (limitedId >= Id_sat_at_Vds_sat) {
+        // 在飽和區，且 Vds 大於 Vds_sat
+        // Id = Id_sat_base * (1 + λ * Vds)
+        // => Vds = (Id / Id_sat_base - 1) / λ
+
+        if (m_lambda > 0.0) {
+            Vds = (limitedId / Id_sat_base - 1.0) / m_lambda;
+
+            // 確保 Vds 至少是 Vds_sat
+            if (Vds < Vds_sat) {
+                Vds = Vds_sat;
+            }
+        } else {
+            // λ = 0 時，飽和區電流不隨 Vds 變化
+            // 無法從 Id 反推 Vds，回傳 Vds_sat 作為最小可能值
+            Vds = Vds_sat;
+        }
+    } else {
+        // 可能在三極管區或飽和區邊界
+        // 先試試看是否在飽和區（Vds = Vds_sat 時，Id 應該等於 Id_sat_at_Vds_sat）
+        if (std::abs(limitedId - Id_sat_at_Vds_sat) < 1e-12) {
+            // 剛好在飽和區邊界
+            Vds = Vds_sat;
+        } else {
+            // 在三極管區，解二次方程式
+            // Id = Kn * [2*(Vgs-Vth)*Vds - Vds^2]
+            // => Vds^2 - 2*(Vgs-Vth)*Vds + Id/Kn = 0
+
+            double a = 1.0;
+            double b = -2.0 * Vgs_eff;
+            double c = limitedId / m_Kn;
+
+            double discriminant = b * b - 4.0 * a * c;
+
+            // 檢查判別式
+            if (discriminant < -1e-12) {
+                // 判別式為負，無實數解
+                return 0.0;
+            }
+            if (discriminant < 0.0) {
+                discriminant = 0.0;
+            }
+
+            double sqrt_disc = std::sqrt(discriminant);
+
+            // 兩個根：(-b ± sqrt_disc) / (2a)
+            double root1 = (-b + sqrt_disc) / (2.0 * a);
+            double root2 = (-b - sqrt_disc) / (2.0 * a);
+
+            // 在三極管區，Vds 應該小於 Vds_sat，且為正
+            // 通常 root2 較小，root1 較大
+            if (root2 >= 0.0 && root2 <= Vds_sat) {
+                Vds = root2;
+            } else if (root1 >= 0.0 && root1 <= Vds_sat) {
+                Vds = root1;
+            } else {
+                // 兩個根都不在合理範圍內
+                Vds = Vds_sat;
+            }
+        }
+    }
+
+    // 套用 Vds_max 限制
+    if (Vds > effectiveVds_max) {
+        Vds = effectiveVds_max;
+    }
+    if (Vds < 0.0) {
+        Vds = 0.0;
+    }
+
+    // 檢查計算結果是否合理：用算出的 Vds 反推 Id 應該接近輸入的 Id
+    double calculatedId = 0.0;
+    if (Vds < Vds_sat) {
+        // 三極管區
+        calculatedId = m_Kn * (2.0 * Vgs_eff * Vds - Vds * Vds);
+    } else {
+        // 飽和區
+        calculatedId = Id_sat_base * (1.0 + m_lambda * Vds);
+    }
+
+    // 如果誤差太大，可能是數值問題，回傳 0
+    if (std::abs(calculatedId - limitedId) > 0.1 * limitedId) {
+        return 0.0;
+    }
+
+    // 根據通道類型返回正確極性
+    if (m_isNChannel) {
+        return Vds;
+    } else {
+        return -Vds;
+    }
+}
+#endif
+
+#ifdef findVgsFromId_short_Version
+double MOSFET::findVgsFromId(double Id, double Vds) const
+{
+    // 處理 P-channel 的極性
+    double effectiveId = Id;
+    double effectiveVth = m_Vth;
+
+    if (!m_isNChannel) {
+        effectiveId = -Id;      // P-channel 電流為負，轉成正的來算
+        effectiveVth = -m_Vth;  // P-channel Vth 為負，轉成正的
+    }
+
+    // 檢查電流是否合理
+    if (effectiveId <= 0.0) {
+        return 0.0;
+    }
+
+    // 限制不超過 Id_max
+    if (effectiveId > m_Id_max) {
+        effectiveId = m_Id_max;
+    }
+
+    // 從飽和區公式反推 Vgs
+    // Id = Kn * (Vgs - Vth)^2
+    double Vgs = effectiveVth + std::sqrt(effectiveId / m_Kn);
+
+    // 根據通道類型返回正確極性
+    if (m_isNChannel) {
+        return Vgs;
+    } else {
+        return -Vgs;
+    }
+}
+#else
+double MOSFET::findVgsFromId(double Id, double Vds) const
+{
+    // 處理極性
+    double effectiveId = std::abs(Id);
+    double effectiveVds = std::abs(Vds);
+    double effectiveVth = std::abs(m_Vth);
+
+    // 檢查是否超過 Id_max
+    if (effectiveId > m_Id_max) {
+        effectiveId = m_Id_max;
+    }
+
+    // 先假設在飽和區，計算 Vgs
+    double Vgs = effectiveVth + std::sqrt(effectiveId / m_Kn);
+
+    // 檢查這個 Vgs 下是否真的在飽和區
+    double Vds_sat = Vgs - effectiveVth;
+
+    // 確保不超過合理範圍
+
+    if (effectiveVds >= Vds_sat) {
+        // 確實在飽和區，直接使用
+        double result = Vgs;
+
+        double Vgs_max = effectiveVth + std::sqrt(m_Id_max / m_Kn);
+
+        // 確保不超過合理範圍
+        if (result  > Vgs_max) {
+            result  = Vgs_max;
+        }
+        if (result  < effectiveVth) {
+            result  = effectiveVth;
+        }
+
+        if (m_isNChannel) {
+            return result;
+        } else {
+            return -result;
+        }
+
+    }else {
+        // 在三極管區，需要解二次方程式
+        // Id = Kn * (2*(Vgs-Vth)*Vds - Vds^2)
+        // => 2*Kn*Vds*(Vgs-Vth) = Id + Kn*Vds^2
+        // => Vgs = (Id + Kn*Vds^2) / (2*Kn*Vds) + Vth
+
+        // 避免除以零
+        if (effectiveVds <= 0.0) {
+            return 0.0;
+        }
+
+        double Vgs_triode = (effectiveId + m_Kn * effectiveVds * effectiveVds)
+                                / (2.0 * m_Kn * effectiveVds) + effectiveVth;
+
+        double result = Vgs_triode;
+
+
+        // 確保不超過合理範圍
+        double Vgs_max = effectiveVth + std::sqrt(m_Id_max / m_Kn);
+
+        if (result  > Vgs_max) {
+            result  = Vgs_max;
+        }
+        if (result  < effectiveVth) {
+            result  = effectiveVth;
+        }
+
+        if (m_isNChannel) {
+            return result;
+        } else {
+            return -result;
+        }
+    }
+
+}
+#endif
+
+double MOSFET::findIdFromVgs(double Vgs, double Vds) const
+{
+    // 處理 P-channel 的極性反轉
+    double effectiveVgs = std::abs(Vgs);
+    double effectiveVds = std::abs(Vds);
+    double effectiveVth = std::abs(m_Vth);
 
     // 檢查是否截止
     if (effectiveVgs <= effectiveVth) {
@@ -996,15 +1048,10 @@ void MOSFET::setVoltageDependentCapacitances(
 double MOSFET::calculateId_saturation(double Vgs, double Vds) const
 {
     // 處理極性
-    double effectiveVgs = Vgs;
-    double effectiveVds = Vds;
-    double effectiveVth = m_Vth;
+    double effectiveVgs = std::abs(Vgs);
+    double effectiveVds = std::abs(Vds);
+    double effectiveVth = std::abs(m_Vth);
 
-    if (!m_isNChannel) {
-        effectiveVgs = -Vgs;
-        effectiveVds = -Vds;
-        effectiveVth = -m_Vth;
-    }
 
     // 檢查是否截止
     if (effectiveVgs <= effectiveVth) return 0.0;
@@ -1015,22 +1062,23 @@ double MOSFET::calculateId_saturation(double Vgs, double Vds) const
     // 限制電流
     if (Id > m_Id_max) Id = m_Id_max;
 
-    return m_isNChannel ? Id : -Id;
+    //return m_isNChannel ? Id : -Id;
+
+    if (m_isNChannel) {
+        return Id;
+    } else {
+        return -Id;
+    }
 }
 
 // 三極管區 Id 計算
 double MOSFET::calculateId_triode(double Vgs, double Vds) const
 {
     // 處理極性
-    double effectiveVgs = Vgs;
-    double effectiveVds = Vds;
-    double effectiveVth = m_Vth;
+    double effectiveVgs = std::abs(Vgs);
+    double effectiveVds = std::abs(Vds);
+    double effectiveVth = std::abs(m_Vth);
 
-    if (!m_isNChannel) {
-        effectiveVgs = -Vgs;
-        effectiveVds = -Vds;
-        effectiveVth = -m_Vth;
-    }
 
     // 檢查是否截止
     if (effectiveVgs <= effectiveVth) return 0.0;
@@ -1042,26 +1090,34 @@ double MOSFET::calculateId_triode(double Vgs, double Vds) const
     // 限制電流
     if (Id > m_Id_max) Id = m_Id_max;
 
-    return m_isNChannel ? Id : -Id;
+    //return m_isNChannel ? Id : -Id;
+
+    if (m_isNChannel) {
+        return Id;
+    } else {
+        return -Id;
+    }
+
 }
 
 // 飽和區起始電壓計算
 double MOSFET::calculateVds_saturation(double Vgs) const
 {
     // 處理極性
-    double effectiveVgs = Vgs;
-    double effectiveVth = m_Vth;
-
-    if (!m_isNChannel) {
-        effectiveVgs = -Vgs;
-        effectiveVth = -m_Vth;
-    }
+    double effectiveVgs = std::abs(Vgs);
+    double effectiveVth = std::abs(m_Vth);
 
     if (effectiveVgs <= effectiveVth) return 0.0;
 
     double Vds_sat = effectiveVgs - effectiveVth;
 
-    return m_isNChannel ? Vds_sat : -Vds_sat;
+    //return m_isNChannel ? Vds_sat : -Vds_sat;
+
+    if (m_isNChannel) {
+        return Vds_sat;
+    } else {
+        return -Vds_sat;
+    }
 }
 
 

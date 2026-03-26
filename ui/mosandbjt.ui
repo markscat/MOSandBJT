@@ -933,10 +933,10 @@ border: 1px solid gray;</string>
      <widget class="QLabel" name="Work_Point_label">
       <property name="geometry">
        <rect>
-        <x>30</x>
+        <x>10</x>
         <y>740</y>
-        <width>171</width>
-        <height>19</height>
+        <width>191</width>
+        <height>20</height>
        </rect>
       </property>
       <property name="text">
@@ -1065,7 +1065,7 @@ border: 1px solid gray;</string>
      <x>0</x>
      <y>0</y>
      <width>1253</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFunction">

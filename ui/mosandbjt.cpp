@@ -296,28 +296,25 @@ void MOSandBJT::mouseMoveEvent(QMouseEvent *event)
 //------------------------------------------------------------------------------
 // 按鈕事件
 //------------------------------------------------------------------------------
-
 void MOSandBJT::on_calculate_pushButton_clicked()
 {
-     qDebug() << "calculate button clicked";  // ← 加這行
-    // 載入當前頁籤的參數
     int currentTab = ui->tabWidget->currentIndex();
 
-    if (currentTab == 0) {  // MOS 分析
+    if (currentTab == 0) {  // MOS 分析頁籤
+        // 1. 讀取 UI 參數到物件 (只呼叫一次)
         loadMosfetParameters();
 
-        // 驗證參數
+        // 2. 驗證參數合法性
         std::string errorMsg;
         if (!m_mosfet->validateParameters(errorMsg)) {
             QMessageBox::warning(this, "參數錯誤", QString::fromStdString(errorMsg));
             return;
         }
 
-        // 繪製曲線
+        // 3. 執行繪圖連動
         plotMosfetCurves();
 
-    } else if (currentTab == 2) {  // BJT 分析（以後實作）
-        // 暫時顯示訊息
+    } else if (currentTab == 2) {  // BJT 分析頁籤
         QMessageBox::information(this, "提示", "BJT 功能尚未實作");
     }
 }
@@ -460,38 +457,53 @@ void MOSandBJT::loadMosfetParameters()
 
 void MOSandBJT::plotMosfetCurves()
 {
-
-    qDebug() << "plotMosfetCurves called";  // ← 加這行
-
     if (!m_plotWidget) return;  // 改用 QWidget
 
     // 清除舊的繪圖
     clearPlot();
 
+    // --- [修改點 A]: 取得物理參數，準備計算 ---
+    double physicalVdsMax = m_mosfet->getParameter("Vds_max");
+    double physicalIdMax  = m_mosfet->getParameter("Id_max");
+    double vth            = m_mosfet->getParameter("Vth");
+    // 從 UI 讀取當前的 Kn (確保換算後的結果被用到)
+    double kn             = ui->Kn_lineEdit->text().toDouble();
+
     // 產生參數列表
     QVector<double> paramList;
 
     if (m_isOutputCurve) {
-        qDebug() << "Output curve mode";
+        // --- [修改點 B]: 自動計算 Vgs 範圍，讓曲線「填滿」圖表 ---
+        // 根據物理公式 Vgs = Vth + sqrt(Id/Kn) 反推達到 IdMax 需要多少電壓
+        double vgsNeededForMax = vth + std::sqrt(physicalIdMax / kn);
 
-        // 輸出特性：多條 Vgs 曲線
-        paramList = generateParamList(2.0, 5.0, 4);
-
-        // 產生曲線
-        QVector<UICurveData> curves = generateOutputCurves(*m_mosfet, paramList);
-
-        qDebug() << "curves size:" << curves.size();
-
-
-        // 儲存曲線資料（供 paintEvent 使用）
-        m_curveData = curves;
+        // 1. 取得必要參數
+        double vth = m_mosfet->getParameter("Vth");
+        double kn = ui->Kn_lineEdit->text().toDouble(); // 拿畫面上那個算好的 Kn
+        double idMax = m_mosfet->getParameter("Id_max");
 
 
+
+        // 3. 產生參數列表 (從 Vth+0.5V 開始，到剛好衝破 Id_max 為止，畫 8 條線)
+        // 這樣你的圖表就會從底部一直填滿到頂部，非常專業
+        QVector<double> paramList = generateParamList(vth + 0.5, vgsNeededForMax, 8);
+
+        // 4. 產生數據
+        m_curveData = generateOutputCurves(*m_mosfet, paramList, "Vgs=");
+
+
+        // --- [修改點 C]: 設定「顯示範圍」（增加 10% 裕度） ---
+        m_xMin = 0;
+        m_xMax = physicalVdsMax * 1.05; // X軸多留 5% 空間，防止標籤貼邊
+        m_yMin = 0;
+        m_yMax = physicalIdMax * 1.10;  // Y軸多留 10% 空間，防止最上面那條線切齊邊框
+
+        /*
         // 設定顯示範圍
         m_xMin = 0;
         m_xMax = m_mosfet->getParameter("Vds_max");
         m_yMin = 0;
-        m_yMax = m_mosfet->getParameter("Id_max");
+        m_yMax = m_mosfet->getParameter("Id_max");*/
 
     } else {
         // 轉移特性
@@ -502,11 +514,22 @@ void MOSandBJT::plotMosfetCurves()
         m_curveData.clear();
         m_curveData.append(curve);
 
+        // 設定顯示範圍
         m_xMin = 0;
         m_xMax = 5;
+        // [修正處]: 同樣加上 10% 裕度，避免頂到天花板
         m_yMin = 0;
-        m_yMax = m_mosfet->getParameter("Id_max");
+        m_yMax = m_mosfet->getParameter("Id_max")* 1.10;
+    }       
+
+    // --- [修改點 D]: 將資料同步傳送到 PlotCanvas 畫布 ---
+    // 透過 qobject_cast 找到我們提升過的自定義畫布
+    PlotCanvas *canvas = qobject_cast<PlotCanvas*>(m_plotWidget);
+    if (canvas) {
+        // 將包含「裕度」後的 m_xMax 與 m_yMax 傳給畫布
+        canvas->setData(m_curveData, m_xMax, m_yMax);
     }
+    // ------------------------------------
 
     // 觸發重繪
     m_plotWidget->update();

@@ -6,6 +6,8 @@
 #include <QMouseEvent>
 #include <vector>
 #include "../include/transistor.h" // 為了使用 Point 結構
+#include "curve_utils.h" // 確保有這個來識別 UICurveData
+
 
 class PlotCanvas : public QWidget
 {
@@ -15,6 +17,8 @@ public:
 
     // 讓主視窗傳入數據的方法
     void setData(const std::vector<Point>& points, double xMax, double yMax);
+    //多載
+    void setData(const QVector<UICurveData>& curves, double xMax, double yMax);
 
     // 清除畫布
     void clear();
@@ -28,6 +32,17 @@ protected:
     void leaveEvent(QEvent *event) override;
 
 private:
+
+
+    QVector<UICurveData> m_curves; // 儲存多條曲線
+    QString m_xLabel = "Vds (V)";
+    QString m_yLabel = "Id (A)";
+
+    void drawCurves(QPainter &painter);
+    void drawHintBox(QPainter *painter);
+    void drawGridAndAxes(QPainter &painter);
+
+
     // 核心數據
     std::vector<Point> m_curvePoints;
 
@@ -54,6 +69,8 @@ private:
     // 內部輔助函式：將「像素座標」反推為「物理數值」
     double pxToValX(int px);
     double pxToValY(int py);
+
+
 };
 
 #endif // PLOTCANVAS_H
