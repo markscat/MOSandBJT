@@ -207,7 +207,7 @@ void MOSandBJT::setupUi()
     ui->plot_hScrollBar->setVisible(false);
 
     // 設定 Id 標籤旋轉
-    ui->Id_label->setProperty("rotation", -90);
+    //ui->Id_label->setProperty("rotation", -90);
 
     // 設定下拉選單
     ui->OutOrtran_comboBox->addItem("輸出特性");
@@ -356,13 +356,14 @@ void MOSandBJT::on_tabWidget_currentChanged(int index)
     m_isMosfetMode = (index == 0 || index == 1);
 
     // 更新 UI 顯示
+    /*
     if (index == 0) {
         ui->Id_label->setText("Id(A)");
         ui->V_label->setText("Vds(V)");
     } else if (index == 2) {
         ui->Id_label->setText("Ic(A)");
         ui->V_label->setText("Vce(V)");
-    }
+    }*/
 
     // 清空工作點標籤
     ui->Work_Point_label->setText("工作點: --");
@@ -462,27 +463,26 @@ void MOSandBJT::plotMosfetCurves()
     // 清除舊的繪圖
     clearPlot();
 
+    PlotAxisSettings settings;
+
     // --- [修改點 A]: 取得物理參數，準備計算 ---
     double physicalVdsMax = m_mosfet->getParameter("Vds_max");
     double physicalIdMax  = m_mosfet->getParameter("Id_max");
     double vth            = m_mosfet->getParameter("Vth");
     // 從 UI 讀取當前的 Kn (確保換算後的結果被用到)
     double kn             = ui->Kn_lineEdit->text().toDouble();
+    //double idMax = m_mosfet->getParameter("Id_max");
 
     // 產生參數列表
     QVector<double> paramList;
 
     if (m_isOutputCurve) {
-        // --- [修改點 B]: 自動計算 Vgs 範圍，讓曲線「填滿」圖表 ---
+
+        //自動計算 Vgs 範圍，讓曲線「填滿」圖表 ---
         // 根據物理公式 Vgs = Vth + sqrt(Id/Kn) 反推達到 IdMax 需要多少電壓
         double vgsNeededForMax = vth + std::sqrt(physicalIdMax / kn);
 
         // 1. 取得必要參數
-        double vth = m_mosfet->getParameter("Vth");
-        double kn = ui->Kn_lineEdit->text().toDouble(); // 拿畫面上那個算好的 Kn
-        double idMax = m_mosfet->getParameter("Id_max");
-
-
 
         // 3. 產生參數列表 (從 Vth+0.5V 開始，到剛好衝破 Id_max 為止，畫 8 條線)
         // 這樣你的圖表就會從底部一直填滿到頂部，非常專業
@@ -491,6 +491,7 @@ void MOSandBJT::plotMosfetCurves()
         // 4. 產生數據
         m_curveData = generateOutputCurves(*m_mosfet, paramList, "Vgs=");
 
+        settings.yPrecision = 2; // Vgs 通常需要看比較細
 
         // --- [修改點 C]: 設定「顯示範圍」（增加 10% 裕度） ---
         m_xMin = 0;
@@ -498,46 +499,46 @@ void MOSandBJT::plotMosfetCurves()
         m_yMin = 0;
         m_yMax = physicalIdMax * 1.10;  // Y軸多留 10% 空間，防止最上面那條線切齊邊框
 
-        /*
-        // 設定顯示範圍
-        m_xMin = 0;
-        m_xMax = m_mosfet->getParameter("Vds_max");
-        m_yMin = 0;
-        m_yMax = m_mosfet->getParameter("Id_max");*/
-
     } else {
         // 轉移特性
         double vds = 10.0;
         std::vector<Point> points = m_mosfet->transferCurve(vds);
 
-        UICurveData curve(toQtPoints(points), QString("Vds = %1V").arg(vds));
         m_curveData.clear();
-        m_curveData.append(curve);
 
+        m_curveData.append(UICurveData(toQtPoints(points), QString("Vds=%1V").arg(vds)));
+
+        // 轉移特性的 X 軸是 Vgs，範圍通常不需要到 Vdss 那麼大
         // 設定顯示範圍
         m_xMin = 0;
-        m_xMax = 5;
+        m_xMax = 10;
         // [修正處]: 同樣加上 10% 裕度，避免頂到天花板
         m_yMin = 0;
         m_yMax = m_mosfet->getParameter("Id_max")* 1.10;
-    }       
 
-    // --- [修改點 D]: 將資料同步傳送到 PlotCanvas 畫布 ---
+        settings.xPrecision = 2; // Vgs 通常需要看比較細
+    }
+
+    //座標軸設定
+    settings= getPlotConfig();
+
+
+    // --- 將資料同步傳送到 PlotCanvas 畫布 ---
     // 透過 qobject_cast 找到我們提升過的自定義畫布
     PlotCanvas *canvas = qobject_cast<PlotCanvas*>(m_plotWidget);
     if (canvas) {
         // 將包含「裕度」後的 m_xMax 與 m_yMax 傳給畫布
-        canvas->setData(m_curveData, m_xMax, m_yMax);
+        canvas->setData(m_curveData, m_xMax, m_yMax,settings);
     }
     // ------------------------------------
 
     // 觸發重繪
     m_plotWidget->update();
 }
-
+/*
 void MOSandBJT::paintEvent(QPaintEvent *event)
 {
-    qDebug() << "paintEvent called";  // ← 加這行
+    qDebug() << "MOSandBJT::paintEvent called";  // ← 加這行
 
 
     QMainWindow::paintEvent(event);
@@ -609,7 +610,7 @@ void MOSandBJT::paintEvent(QPaintEvent *event)
         }
     }
 }
-
+*/
 
 void MOSandBJT::plotBjtCurves()
 {
@@ -706,6 +707,49 @@ QString MOSandBJT::formatWorkPoint(double value, const QString& unit) const
     }
 }
 
+PlotAxisSettings MOSandBJT::getPlotConfig() const
+{
+    PlotAxisSettings s; // 建立一個空的設定
+    int currentTab = ui->tabWidget->currentIndex();
+
+    // --- 第一層判斷：MOS 系列 (Tab 0 或 1) ---
+    if (currentTab == 0 || currentTab == 1) {
+        //----第二層判斷：轉移特性曲線還是輸出特性曲線
+        if (m_isOutputCurve) {
+            s.xLabel = "Vds";
+            s.yLabel = "Id";
+            s.xUnit  = "V";
+            s.yUnit  = "A";
+            //s.xPrecision = 1;
+        } else {
+            s.xLabel = "Vgs";
+            s.yLabel = "Id";
+            s.xUnit  = "V";
+            s.yUnit  = "A";
+            //s.xPrecision = 2;
+        }
+    }
+    // --- 第一層判斷：BJT 系列 (Tab 2 或 3) ---
+    else if (currentTab == 2 || currentTab == 3) {
+        //----第二層判斷：轉移特性曲線還是輸出特性曲線
+        if (m_isOutputCurve) {
+            s.xLabel = "Vce";
+            s.yLabel = "Ic";
+            s.xUnit  = "V";
+            s.yUnit  = "A";
+            //s.xPrecision = 1;
+        } else {
+            s.xLabel = "Ib";
+            s.yLabel = "Ic";
+            s.xUnit  = "A";
+            s.yUnit  = "A";
+            //s.xPrecision = 6; // Ib 通常很小，需要更高精度
+        }
+    }
+
+    return s;
+}
+
 void MOSandBJT::on_mosfetParameter_changed()
 {
     bool okVth, okRds;
@@ -736,6 +780,68 @@ void MOSandBJT::on_mosfetParameter_changed()
         }
     }
 }
+//---- 存檔 ----
+// 按鈕 Slot 現在變得很乾淨
+void MOSandBJT::on_Save_pushButton_clicked() {
+    if (m_curveData.isEmpty()) {
+        return;
+    }
+
+    // 1. 打包數據 (呼叫下方的新方法)
+    MultiCurveBundle bundle = prepareExportBundle();
+
+    // 2. 轉換為 CSV 字串 (交給存檔引擎)
+    std::string csvContent = CurveExporter::formatProfessionalCSV(bundle);
+
+    // 3. 寫入檔案 (交給底層工具)
+    std::string prefix = "MOS_";
+    if (!m_isMosfetMode) {
+        prefix = "BJT_";
+    }
+    std::string filename = File_save::generateTimestampFilename(prefix);
+    File_save::writeFile(filename, csvContent);
+
+    QMessageBox::information(this, "存檔成功", "檔案已儲存：" + QString::fromStdString(filename));
+}
+
+// 專門負責「決定要存什麼」的函數，解決癰腫問題
+MultiCurveBundle MOSandBJT::prepareExportBundle() {
+    MultiCurveBundle bundle;
+
+    if (m_isOutputCurve) {
+        bundle.title = "Output Characteristics Analysis";
+        bundle.xAxisLabel = "Vds";
+        bundle.metadata = "Vth=" + ui->Vth_lineEdit->text().toStdString() +
+                          ", Kn=" + ui->Kn_lineEdit->text().toStdString();
+    } else {
+        bundle.title = "Transfer Characteristics Analysis";
+        bundle.xAxisLabel = "Vgs";
+        bundle.metadata = "Fixed Vds=10V, Vth=" + ui->Vth_lineEdit->text().toStdString();
+    }
+
+    // 填充數據並計算 gm/rds
+    for (const auto& curve : m_curveData) {
+        bundle.curveLabels.push_back(curve.label.toStdString());
+        std::vector<ExtendedPoint> exList;
+
+        for (const auto& pt : curve.points) {
+            ExtendedPoint ep;
+            ep.x = pt.x();
+            ep.y = pt.y();
+
+            // 這裡呼叫 MOSFET 內部的單點計算方法 (需在 mosfet.cpp 補上)
+            // 註：這部分可以根據 m_isOutputCurve 傳入對應參數
+            ep.gm = m_mosfet->calculateGm(..., ep.x);
+            ep.rds = m_mosfet->calculateRds(..., ep.x);
+
+            exList.push_back(ep);
+        }
+        bundle.data.push_back(exList);
+    }
+    return bundle;
+}
+//--------------
+
 
 MOSandBJT::~MOSandBJT()
 {

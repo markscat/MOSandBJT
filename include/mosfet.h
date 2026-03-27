@@ -385,6 +385,9 @@ public:
     static double calculateGfsFromRds(double rdsOn_Ohm);
 
 
+    double calculateGm(double Vgs, double Vds) const;
+    double calculateRds(double Vgs, double Vds) const;
+
 private:
 
     /**

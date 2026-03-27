@@ -69,8 +69,31 @@ struct BiasPoint {
     double Vgs;     // 8 bytes
     bool valid;     // 1 byte (+ padding)
 
+    double gm;     // 跨導
+    double rds;    // 輸出電阻
+
     BiasPoint() : Vce(0), Ic(0), Ib(0), Vds(0), Id(0), Vgs(0), valid(false) {}
 };
+
+
+// 包含所有物理數據的點
+struct ExtendedPoint {
+    double x;      // Vds 或 Vgs
+    double y;      // Id
+    double gm;     // 跨導
+    double rds;    // 輸出電阻
+};
+
+
+// 存檔用的數據包裹 (不依賴 Qt)
+struct MultiCurveBundle {
+    std::string title;                    // 檔案標題
+    std::string metadata;                 // 元件參數資訊
+    std::string xAxisLabel;               // "Vds" 或 "Vgs"
+    std::vector<std::string> curveLabels; // 每一條線的標籤
+    std::vector<std::vector<ExtendedPoint>> data; // 8 條線的數據
+};
+
 
 enum class BiasConfig {
     FixedVgs,        // MOSFET: 固定 Vgs

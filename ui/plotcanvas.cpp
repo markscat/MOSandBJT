@@ -27,11 +27,12 @@ void PlotCanvas::setData(const std::vector<Point>& points, double xMax, double y
 }
 */
 // plotcanvas.cpp
-void PlotCanvas::setData(const QVector<UICurveData>& curves, double xMax, double yMax)
+void PlotCanvas::setData(const QVector<UICurveData>& curves, double xMax, double yMax,const PlotAxisSettings& settings)
 {
     m_curves = curves; // 直接賦值
     m_xMax = xMax;
     m_yMax = yMax;
+    m_settings = settings;
     update(); // 觸發畫布重繪
 }
 
@@ -82,6 +83,7 @@ double PlotCanvas::pxToValY(int py)
 
 void PlotCanvas::mouseMoveEvent(QMouseEvent *event)
 {
+
     m_mousePos = event->pos();
 
     // 檢查滑鼠是否在繪圖區域內
@@ -103,6 +105,7 @@ void PlotCanvas::leaveEvent(QEvent *event)
     m_showHint = false;
     update();
 }
+#ifdef Lone_Version
 
 void PlotCanvas::paintEvent(QPaintEvent *event)
 {
@@ -126,12 +129,8 @@ void PlotCanvas::paintEvent(QPaintEvent *event)
     painter.drawLine(plotLeft, plotBottom, plotRight, plotBottom); // X軸
     painter.drawLine(plotLeft, plotBottom, plotLeft, plotTop);    // Y軸
 
-
-    // 3. 繪製座標主軸線 (L 型)
     QPen axisPen(Qt::black, 2); // 黑色，寬度 2
     painter.setPen(axisPen);
-
-
 
     // 水平 X 軸
     painter.drawLine(plotLeft, plotBottom, plotRight, plotBottom);
@@ -198,15 +197,38 @@ void PlotCanvas::paintEvent(QPaintEvent *event)
     // 6. 如果有數據，繪製曲線（我們下一步再做）
     drawCurves(painter);
 
-    // 7. 最後畫左下角提示框（放在最上層）
-    //drawHintBox(&painter);
-
     // 7. 繪製左下角提示框
     if (m_showHint) {
-        drawHintBox(&painter);
+        drawHintBox(painter);
+    }
+}
+#else
+void PlotCanvas::paintEvent(QPaintEvent *event)
+{
+    // 1. 初始化畫筆，並開啟防鋸齒（讓線條平滑）
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    // 2. 繪製最底層：背景（純白）
+    painter.fillRect(rect(), Qt::white);
+
+    // 3. 呼叫網格與座標軸模組 (底層)
+    drawGridAndAxes(painter);
+
+    // 4. 呼叫曲線模組 (中層)
+    drawCurves(painter);
+
+    // 5. 互動層邏輯：只有當滑鼠在繪圖區內時，才畫輔助線與資訊框 (頂層)
+    if (m_showHint) {
+        // 呼叫 X-Y 輔助虛線模組
+        drawCrosshair(painter);
+
+        // 呼叫左下角資訊提示框
+        drawHintBox(painter);
     }
 }
 
+#endif
 void PlotCanvas::drawCurves(QPainter &painter)
 {
     if (m_curves.isEmpty()) return;
@@ -313,20 +335,25 @@ void PlotCanvas::drawGridAndAxes(QPainter &painter)
         painter.drawLine(plotLeft, y, plotLeft - 5, y);
     }
 
-    // 繪製 X 軸標籤
-    painter.setPen(Qt::black);
-    painter.drawText(QRect(plotLeft, plotBottom + 20, plotRight - plotLeft, 20),
-                     Qt::AlignCenter, m_xLabel);
 
-    // 繪製 Y 軸標籤 (旋轉 90 度)
+    // --- 修改處 A：繪製 X 軸標籤 (組合名稱與單位) ---
+    painter.setPen(Qt::black);
+    QString xFullLabel = m_settings.xLabel + " (" + m_settings.xUnit + ")";
+    painter.drawText(QRect(plotLeft, plotBottom + 20, plotRight - plotLeft, 20),
+                     Qt::AlignCenter, xFullLabel);
+
+
+    // --- 修改處 B：繪製 Y 軸標籤 (組合名稱與單位並旋轉) ---
     painter.save();
+    QString yFullLabel = m_settings.yLabel + " (" + m_settings.yUnit + ")";
     painter.translate(20, (plotTop + plotBottom) / 2);
     painter.rotate(-90);
-    painter.drawText(-50, 0, 100, 20, Qt::AlignCenter, m_yLabel);
+    // 這裡我們稍微加寬文字範圍 (150)，確保長的標籤不會被切掉
+    painter.drawText(-75, 0, 150, 20, Qt::AlignCenter, yFullLabel);
     painter.restore();
 }
 
-void PlotCanvas::drawHintBox(QPainter *painter)
+void PlotCanvas::drawHintBox(QPainter &painter)
 {
     // 1. 從目前的滑鼠位置反推物理數值
     double vVal = pxToValX(m_mousePos.x());
@@ -346,11 +373,46 @@ void PlotCanvas::drawHintBox(QPainter *painter)
     QRect boxRect(boxX, boxY, boxW, boxH);
 
     // 4. 畫背景 (半透明黑)
-    painter->setPen(Qt::NoPen);
-    painter->setBrush(QColor(0, 0, 0, 160)); // 160 是透明度 (0-255)
-    painter->drawRoundedRect(boxRect, 5, 5);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(0, 0, 0, 160)); // 160 是透明度 (0-255)
+    painter.drawRoundedRect(boxRect, 5, 5);
 
     // 5. 畫文字 (白色)
-    painter->setPen(Qt::white);
-    painter->drawText(boxRect.adjusted(10, 5, -10, -5), Qt::AlignLeft | Qt::AlignVCenter, text);
+    painter.setPen(Qt::white);
+    painter.drawText(boxRect.adjusted(10, 5, -10, -5), Qt::AlignLeft | Qt::AlignVCenter, text);
 }
+
+void PlotCanvas::drawCrosshair(QPainter &painter)
+{
+    // 1. 安全檢查：如果沒開啟功能，或滑鼠不在顯示狀態，則不畫
+    if (!m_enableCrosshair || !m_showHint) {
+        return;
+    }
+
+    // 2. 取得繪圖邊界 (引擎核心參數)
+    int plotLeft   = m_marginLeft;
+    //int plotRight  = width() - m_marginRight;
+    //int plotTop    = m_marginTop;
+    int plotBottom = height() - m_marginBottom;
+
+    // 3. 設定輔助線樣式：深灰色、虛線、寬度 1
+    QPen crosshairPen(Qt::darkGray, 1, Qt::DashLine);
+    painter.setPen(crosshairPen);
+
+    // 4. 取得目前滑鼠像素座標
+    int curX = m_mousePos.x();
+    int curY = m_mousePos.y();
+
+    // 5. 繪製垂直輔助線 (從滑鼠點延伸到 X 軸)
+    painter.drawLine(curX, curY, curX, plotBottom);
+
+    // 6. 繪製水平輔助線 (從滑鼠點延伸到 Y 軸)
+    painter.drawLine(curX, curY, plotLeft, curY);
+
+    // 7. [進階功能] 在軸線上標註目前的像素交點 (這讓引擎更有質感)
+    painter.setBrush(Qt::white);
+    painter.setPen(Qt::darkGray);
+    painter.drawEllipse(QPoint(curX, plotBottom), 3, 3); // X軸上的落點
+    painter.drawEllipse(QPoint(plotLeft, curY), 3, 3);   // Y軸上的落點
+}
+

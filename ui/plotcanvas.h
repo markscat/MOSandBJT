@@ -8,6 +8,16 @@
 #include "../include/transistor.h" // 為了使用 Point 結構
 #include "curve_utils.h" // 確保有這個來識別 UICurveData
 
+struct PlotAxisSettings {
+    QString xLabel;      // X 軸名稱 (例如: "Vds")
+    QString yLabel;      // Y 軸名稱 (例如: "Id")
+    QString xUnit;       // X 軸單位 (例如: "V")
+    QString yUnit;       // Y 軸單位 (例如: "A")
+    int xTicks = 10;     // X 軸刻度數量
+    int yTicks = 5;      // Y 軸刻度數量
+    int xPrecision = 1;  // X 軸小數點位數
+    int yPrecision = 2;  // Y 軸小數點位數
+};
 
 class PlotCanvas : public QWidget
 {
@@ -18,7 +28,10 @@ public:
     // 讓主視窗傳入數據的方法
     void setData(const std::vector<Point>& points, double xMax, double yMax);
     //多載
-    void setData(const QVector<UICurveData>& curves, double xMax, double yMax);
+    void setData(const QVector<UICurveData>& curves, double xMax, double yMax,const PlotAxisSettings& settings);
+
+    void setCrosshairEnabled(bool enabled) { m_enableCrosshair = enabled; update(); }
+
 
     // 清除畫布
     void clear();
@@ -33,14 +46,16 @@ protected:
 
 private:
 
-
     QVector<UICurveData> m_curves; // 儲存多條曲線
+
     QString m_xLabel = "Vds (V)";
     QString m_yLabel = "Id (A)";
 
-    void drawCurves(QPainter &painter);
-    void drawHintBox(QPainter *painter);
-    void drawGridAndAxes(QPainter &painter);
+     // --- 引擎的模組化繪圖方法 ---
+    void drawGridAndAxes(QPainter &painter); // 繪製背景網格與座標軸
+    void drawCurves(QPainter &painter);// 繪製數據曲線
+    void drawHintBox(QPainter &painter);// 繪製左下角資訊框
+    void drawCrosshair(QPainter &painter);   // 繪製 X-Y 輔助虛線 (核心需求)
 
 
     // 核心數據
@@ -69,6 +84,11 @@ private:
     // 內部輔助函式：將「像素座標」反推為「物理數值」
     double pxToValX(int px);
     double pxToValY(int py);
+
+    //輔助線
+    bool m_enableCrosshair = true; // 預設開啟
+
+    PlotAxisSettings m_settings;
 
 
 };

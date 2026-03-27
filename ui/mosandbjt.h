@@ -6,6 +6,8 @@
 #include <vector>
 #include "QVector"
 #include "curve_utils.h"
+#include "plotcanvas.h"
+#include "../include/File_save.h"
 
 using UICurveData = struct UICurveData;  // 明確告訴編譯器這是個類型
 
@@ -45,6 +47,9 @@ private slots:
 
     void on_mosfetParameter_changed(); // 處理 Vth 或 Rds(on) 的連動換算
 
+    //存檔
+    void on_Save_pushButton_clicked();
+
 
 private:
     // 初始化相關
@@ -70,11 +75,16 @@ private:
     double findCurrentFromVoltage(double voltage) const;
     double findVoltageFromCurrent(double current) const;
 
+    PlotAxisSettings getPlotConfig() const;
+
 
     // 工具函式
     QString formatWorkPoint(double value, const QString& unit) const;
 
     NumKeyBoard *numpadWindow = nullptr;  // 用來記住 numkeyboard 視窗
+
+    MultiCurveBundle prepareExportBundle();
+
 
 
     Ui::MOSandBJT *ui;
@@ -113,8 +123,8 @@ private:
     static constexpr double PLOT_MARGIN_TOP = 20;
     static constexpr double PLOT_MARGIN_BOTTOM = 50;
 
-protected:
-    void paintEvent(QPaintEvent *event) override;
+//protected:
+    //void paintEvent(QPaintEvent *event) override;
 
 };
 

@@ -31,7 +31,6 @@
 
 class CurveExporter
 {
-public:
 
 public:
     /**
@@ -91,6 +90,7 @@ public:
                                   const std::string& xLabel = "Vds",
                                   const std::string& yLabel = "Id");
 
+    static std::string formatProfessionalCSV(const MultiCurveBundle& bundle);
 
 
 };

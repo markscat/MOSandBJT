@@ -780,27 +780,6 @@
        </property>
       </widget>
      </widget>
-     <widget class="QLabel" name="Id_label">
-      <property name="geometry">
-       <rect>
-        <x>220</x>
-        <y>370</y>
-        <width>45</width>
-        <height>25</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">transform: rotate(-90deg);</string>
-      </property>
-      <property name="text">
-       <string>Id(A)</string>
-      </property>
-     </widget>
      <widget class="QFrame" name="frame">
       <property name="geometry">
        <rect>
@@ -853,33 +832,12 @@
        </property>
       </widget>
      </widget>
-     <widget class="QLabel" name="V_label">
-      <property name="geometry">
-       <rect>
-        <x>680</x>
-        <y>720</y>
-        <width>63</width>
-        <height>19</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true"/>
-      </property>
-      <property name="text">
-       <string>V</string>
-      </property>
-     </widget>
      <widget class="QFrame" name="frame_2">
       <property name="geometry">
        <rect>
-        <x>280</x>
+        <x>230</x>
         <y>100</y>
-        <width>921</width>
+        <width>971</width>
         <height>611</height>
        </rect>
       </property>
@@ -889,44 +847,18 @@
       <property name="frameShadow">
        <enum>QFrame::Shadow::Raised</enum>
       </property>
-      <widget class="QScrollBar" name="plot_vScrollBar">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>10</y>
-         <width>20</width>
-         <height>580</height>
-        </rect>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-      </widget>
       <widget class="PlotCanvas" name="mosPlot_widget" native="true">
        <property name="geometry">
         <rect>
-         <x>20</x>
+         <x>10</x>
          <y>10</y>
-         <width>890</width>
-         <height>580</height>
+         <width>941</width>
+         <height>591</height>
         </rect>
        </property>
        <property name="styleSheet">
         <string notr="true">background-color: white;
 border: 1px solid gray;</string>
-       </property>
-      </widget>
-      <widget class="QScrollBar" name="plot_hScrollBar">
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>590</y>
-         <width>890</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </widget>
@@ -941,6 +873,32 @@ border: 1px solid gray;</string>
       </property>
       <property name="text">
        <string>Workpoint</string>
+      </property>
+     </widget>
+     <widget class="QScrollBar" name="plot_vScrollBar">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>110</y>
+        <width>20</width>
+        <height>591</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Orientation::Vertical</enum>
+      </property>
+     </widget>
+     <widget class="QScrollBar" name="plot_hScrollBar">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>710</y>
+        <width>941</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
       </property>
      </widget>
     </widget>

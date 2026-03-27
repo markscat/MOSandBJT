@@ -1129,3 +1129,33 @@ QString MOSFET::inputUnit() const {
     return "V";  // Vgs 的單位
 }
 
+double MOSFET::calculateGm(double Vgs, double Vds) const {
+    double v_sat = std::abs(Vgs) - std::abs(m_Vth);
+    if (v_sat <= 0) return 0.0;
+
+    double vds_abs = std::abs(Vds);
+    double vds_eff = (vds_abs < v_sat) ? vds_abs : v_sat;
+
+    // gm = dId / dVgs = 2 * Kn * Vds_eff * (1 + lambda * Vds)
+    return 2.0 * m_Kn * vds_eff * (1.0 + m_lambda * vds_abs);
+}
+
+double MOSFET::calculateRds(double Vgs, double Vds) const {
+    double v_sat = std::abs(Vgs) - std::abs(m_Vth);
+    double vds_abs = std::abs(Vds);
+    if (v_sat <= 0) return 1e12; // 截止區，電阻趨於無限大
+
+    if (vds_abs < v_sat) {
+        // 線性區：電阻隨 Vds 增加而增加
+        double g_ds = 2.0 * m_Kn * (v_sat - vds_abs) * (1.0 + m_lambda * vds_abs);
+        if (g_ds <= 1e-9) return 1e9; // 避免除以零
+        return 1.0 / g_ds;
+    } else {
+        // 飽和區：電阻主要受 lambda 控制
+        // rds = 1 / (lambda * Id_base)
+        double id_base = m_Kn * v_sat * v_sat;
+        if (m_lambda <= 0 || id_base <= 0) return 1e9;
+        return 1.0 / (m_lambda * id_base);
+    }
+}
+
