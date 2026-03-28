@@ -8,6 +8,7 @@
 #include "curve_utils.h"
 #include "plotcanvas.h"
 #include "../include/File_save.h"
+#include "../include/curveexporter.h"
 
 using UICurveData = struct UICurveData;  // 明確告訴編譯器這是個類型
 

@@ -1,7 +1,7 @@
 // mosandbjt.cpp
+
 #include "ui/ui_mosandbjt.h"
-//mosandbjt.cpp:2:10: In included file: 'plotcanvas.h' file not found
-//ui_mosandbjt.h:27:10: error occurred here
+
 #include "../ui/numkeyboard.h"
 #include "../ui/mosandbjt.h"
 #include "../include/mosfet.h"
@@ -9,14 +9,17 @@
 #include "curve_utils.h"
 #include "plotcanvas.h"
 
+#include <utility>
+
 #include <QPainter>
 #include <QPainterPath>
 #include <QMessageBox>
 #include <QMouseEvent>
 #include <QDebug>
-#include <utility>
 #include <qpainterpath.h>
 #include <QDebug>
+#include <QDir>
+
 
 
 
@@ -781,58 +784,77 @@ void MOSandBJT::on_mosfetParameter_changed()
     }
 }
 //---- 存檔 ----
-// 按鈕 Slot 現在變得很乾淨
-void MOSandBJT::on_Save_pushButton_clicked() {
-    if (m_curveData.isEmpty()) {
-        return;
-    }
 
-    // 1. 打包數據 (呼叫下方的新方法)
+void MOSandBJT::on_Save_pushButton_clicked() {
+    if (m_curveData.isEmpty()) return;
+
+    // 1. 調用上面修好的打包函數
     MultiCurveBundle bundle = prepareExportBundle();
 
-    // 2. 轉換為 CSV 字串 (交給存檔引擎)
+    // 2. 調用您 curveexporter.cpp 裡已經寫好的專業格式化函數
     std::string csvContent = CurveExporter::formatProfessionalCSV(bundle);
+    /*mosandbjt.cpp:792:30: Use of undeclared identifier 'CurveExporter'
+     */
 
-    // 3. 寫入檔案 (交給底層工具)
-    std::string prefix = "MOS_";
-    if (!m_isMosfetMode) {
-        prefix = "BJT_";
+    // 3. 調用您 File_save.cpp 裡已經寫好的產生檔名與寫入功能
+    std::string prefix = m_isMosfetMode ? "MOS_" : "BJT_";
+    std::string filename = File_save::generateTimestampFilename(prefix,".csv");
+
+    // 執行寫入
+    if (File_save::writeFile(filename, csvContent)) {
+        // QDir::current().absoluteFilePath(...) 會把完整路徑算出來
+        QString fullPath = QDir::current().absoluteFilePath(QString::fromStdString(filename));
+
+        QMessageBox::information(this, "存檔成功",
+                                  "檔案已儲存於：\n" + fullPath);
     }
-    std::string filename = File_save::generateTimestampFilename(prefix);
-    File_save::writeFile(filename, csvContent);
-
-    QMessageBox::information(this, "存檔成功", "檔案已儲存：" + QString::fromStdString(filename));
 }
 
-// 專門負責「決定要存什麼」的函數，解決癰腫問題
+
+
 MultiCurveBundle MOSandBJT::prepareExportBundle() {
     MultiCurveBundle bundle;
 
+    // 1. 根據目前模式設定標題與 X 軸標籤
     if (m_isOutputCurve) {
         bundle.title = "Output Characteristics Analysis";
         bundle.xAxisLabel = "Vds";
+        // 這裡就是您要求的：輸出特性時，參數放上方
         bundle.metadata = "Vth=" + ui->Vth_lineEdit->text().toStdString() +
-                          ", Kn=" + ui->Kn_lineEdit->text().toStdString();
+                          ", Kn=" + ui->Kn_lineEdit->text().toStdString() +
+                          ", Lmda=" + ui->Lmpda_lineEdit->text().toStdString();
     } else {
         bundle.title = "Transfer Characteristics Analysis";
         bundle.xAxisLabel = "Vgs";
-        bundle.metadata = "Fixed Vds=10V, Vth=" + ui->Vth_lineEdit->text().toStdString();
+        bundle.metadata = "Vth=" + ui->Vth_lineEdit->text().toStdString() +
+                          ", Vds_fixed=10V";
     }
 
-    // 填充數據並計算 gm/rds
-    for (const auto& curve : m_curveData) {
-        bundle.curveLabels.push_back(curve.label.toStdString());
-        std::vector<ExtendedPoint> exList;
+    // 2. 遍歷您現有的 8 條線 (m_curveData)
+    for (const auto& curve : std::as_const(m_curveData)) {
 
+        bundle.curveLabels.push_back(curve.label.toStdString());
+
+        // --- 修正處：從 Label 提取數值 (例如從 "Vgs=5.00V" 提取 5.0) ---
+        // 這樣就能解決您不知道該填什麼給 calculateGm 的問題
+        double constVal = curve.label.section('=', 1, 1).section('V', 0, 0).toDouble();
+
+        std::vector<ExtendedPoint> exList;
         for (const auto& pt : curve.points) {
             ExtendedPoint ep;
             ep.x = pt.x();
             ep.y = pt.y();
 
-            // 這裡呼叫 MOSFET 內部的單點計算方法 (需在 mosfet.cpp 補上)
-            // 註：這部分可以根據 m_isOutputCurve 傳入對應參數
-            ep.gm = m_mosfet->calculateGm(..., ep.x);
-            ep.rds = m_mosfet->calculateRds(..., ep.x);
+            // --- 修正編譯錯誤：填入正確的參數順序 ---
+            if (m_isOutputCurve) {
+                // 輸出特性: Vgs 是固定的 (constVal), Vds 是變動的 (ep.x)
+                ep.gm = m_mosfet->calculateGm(constVal, ep.x);
+                ep.rds = m_mosfet->calculateRds(constVal, ep.x);
+            } else {
+                // 轉移特性: Vgs 是變動的 (ep.x), Vds 是固定的 (constVal)
+                ep.gm = m_mosfet->calculateGm(ep.x, constVal);
+                ep.rds = m_mosfet->calculateRds(ep.x, constVal);
+            }
 
             exList.push_back(ep);
         }

@@ -26,14 +26,14 @@ class File_save {
 public:
     // 產生時間戳檔名（維持原功能）
     /**
-	* @brief generateTimestampFilename(const std::string& prefix = "Calc_") static method
+    * @brief generateTimestampFilename(const std::string& prefix = "Calc_",const std::string& ext= "log") static method
 	* @brief 生成一個包含當前日期和時間的檔名，格式為 "Calc_YYYYMMDD_HHMMSS.txt"
 	* @param prefix 檔名前綴，默認為 "Calc_"
 	* @return std::string 生成的檔名
 	* @details 這個方法生成一個包含當前日期和時間的檔名，格式為 "Calc_YYYYMMDD_HHMMSS.txt"，其中 "YYYYMMDD" 是當前的年月日，"HHMMSS" 是當前的時分秒。
                使用者可以通過 prefix 參數自定義檔名前綴，默認為 "Calc_"。這個方法非常適合用於保存特性曲線或其他數據，因為它可以確保每次保存的檔名都是唯一的，並且包含了保存的時間資訊，方便後續的管理和識別。
     */
-    static std::string generateTimestampFilename(const std::string& prefix = "Calc_");
+    static std::string generateTimestampFilename(const std::string& prefix = "Calc_",const std::string& ext= "log");
 
     // 寫入字串到檔案（最通用的版本）
     /**
@@ -72,6 +72,8 @@ public:
 			   這對於保存特性曲線或其他數據非常有用，當使用者希望每次保存都覆蓋之前的內容時，可以使用這個方法。使用者可以通過這個方法來靈活地管理檔案內容，以滿足不同的保存需求。
     */
     static bool overwriteFile(const std::string& filename, const std::string& content);
+
+
 };
 
 #endif

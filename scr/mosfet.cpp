@@ -2,6 +2,7 @@
 #include "../include/transistor.h"
 #include "../ui/cauverdrawable.h"
 
+
 #include <cmath>      // 用 std::sqrt 取代 qSqrt
 #include <string>
 #include <vector>

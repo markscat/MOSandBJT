@@ -4,7 +4,7 @@
 #include <iomanip>
 #include <sstream>
 
-std::string File_save::generateTimestampFilename(const std::string& prefix) {
+std::string File_save::generateTimestampFilename(const std::string& prefix,const std::string& ext) {
     auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     struct tm timeinfo;
 #ifdef _WIN32
@@ -14,7 +14,7 @@ std::string File_save::generateTimestampFilename(const std::string& prefix) {
 #endif
 
     std::stringstream ss;
-    ss << prefix << std::put_time(&timeinfo, "%Y%m%d_%H%M%S") << ".log";
+    ss << prefix << std::put_time(&timeinfo, "%Y%m%d_%H%M%S") << ext;
     return ss.str();
 }
 
