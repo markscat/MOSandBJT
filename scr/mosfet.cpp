@@ -140,75 +140,7 @@ std::vector<Point> MOSFET::outputCurve(double Vgs) const
     }
     return points;
 }
-/*
-std::vector<Point> MOSFET::outputCurve(double Vgs) const
-{
-    std::vector<Point> points;
-    points.reserve(m_curvePoints + 1);
 
-    // 處理 P-channel 的極性反轉
-    double effectiveVgs = Vgs;
-    double effectiveVth = m_Vth;
-    double effectiveVds_max = m_Vds_max;
-
-    if (!m_isNChannel) {
-        // P-channel：電壓極性相反
-        effectiveVgs = -Vgs;
-        effectiveVth = m_Vth;  // Vth 在 P-channel 通常是負值，但我們用正值表示
-        // 對於 P-channel，Vds 是負的，所以掃描範圍從 -m_Vds_max 到 0
-        effectiveVds_max = -m_Vds_max;
-    }
-
-    // 如果 Vgs < Vth，電晶體截止，Id = 0
-    if (effectiveVgs <= effectiveVth) {
-        if (m_isNChannel) {
-            points.push_back(Point(0, 0));
-            points.push_back(Point(effectiveVds_max, 0));
-            return points;
-        }
-    }
-
-    double Vgs_eff = effectiveVgs - effectiveVth;  // 過驅動電壓 (Vgs - Vth)
-    double Vds_sat = Vgs_eff;  // 飽和區起始電壓 = Vgs - Vth
-
-    for (int i = 0; i <= m_curvePoints; i++) {
-
-        double progress = i / (double)m_curvePoints;
-
-        double Vds = progress * effectiveVds_max;  // ← 使用 effectiveVds_max
-
-        double Id = 0;
-
-        // 使用 effectiveVds 來計算 Id（正值）
-        double absVds = std::abs(Vds);
-
-        if (absVds < Vds_sat) {
-            // 三極管區 (線性區)
-            // 公式：Id = Kn * [2(Vgs - Vth)Vds - Vds²]
-            Id = m_Kn * (2.0 * Vgs_eff * absVds - absVds * absVds);
-
-            // 在非常小的 Vds 時，可以用 Rds_on 來近似（如果有的話）
-            if (absVds < 1e-6 && m_Rds_on > 0) {
-                Id = absVds / m_Rds_on;
-            }
-        } else {
-            // 飽和區
-            // 公式：Id = Kn * (Vgs - Vth)² * (1 + λ * Vds)
-            Id = m_Kn * Vgs_eff * Vgs_eff * (1.0 + m_lambda * absVds);
-        }
-
-        // 限制電流不超過 Id_max
-        if (Id > m_Id_max) Id = m_Id_max;
-
-        // 對於 P-channel，電流方向相反
-        if (!m_isNChannel) {
-            Id = -Id;
-        }
-
-        points.push_back(Point(Vds, Id));
-    }
-    return points;
-}*/
 
 // 無參數版本 - 根據通道類型選擇合理的預設 Vds
 std::vector<Point> MOSFET::transferCurve() const
@@ -269,8 +201,6 @@ std::vector<Point> MOSFET::transferCurve(double Vds, double Vgs_start, double Vg
 
     return points;
 }
-
-
 
 
 /**
