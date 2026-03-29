@@ -81,6 +81,7 @@ MOSandBJT::MOSandBJT(QWidget *parent)
                          "1. 確認你的電晶體符合上述類型\n"
                          "2. 輸入合理的參數（可參考規格書）\n"
                          "3. 自行驗證計算結果\n"
+                         "4. P-ch晶體，請依照規格書中的數值，自行轉換成絕對值，否則會跳出錯誤"
                          "亂玩參數導致結果不準，恕不負責。\n"
                          "點擊「OK」即表示你同意上述聲明。\n\n"
                          "Important Notice - Must Read\n\n"
@@ -309,7 +310,7 @@ void MOSandBJT::on_calculate_pushButton_clicked()
 
         // 2. 驗證參數合法性
         std::string errorMsg;
-        if (!m_mosfet->validateParameters(errorMsg)) {
+        if (!m_mosfet->validateParameters(errorMsg)) {//<<在這邊就把程式給關了
             QMessageBox::warning(this, "參數錯誤", QString::fromStdString(errorMsg));
             return;
         }

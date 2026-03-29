@@ -72,8 +72,12 @@ std::vector<std::string> MOSFET::paramList() const
 // 參數驗證
 bool MOSFET::validateParameters(std::string& errorMsg) const
 {
-    if (m_Vth <= 0) {
-        errorMsg = "Vth 必須大於 0";
+    if (m_isNChannel && m_Vth <= 0) {
+        errorMsg = "N-channel MOSFET Vth 必須大於 0";
+        return false;
+    }
+    if (!m_isNChannel && m_Vth >= 0) {
+        errorMsg = "P-channel MOSFETVth 必須小於 0";
         return false;
     }
     if (m_Kn <= 0) {
@@ -282,8 +286,6 @@ double MOSFET::calculateGfsFromRds(double rdsOn_Ohm)
 // 找點功能
 //#define findVgsFromId_short_Version
 //#define findVdsFromId_short_Version
-
-
 
 /**
  * @brief 計算 MOSFET 的工作點（Q Point）
