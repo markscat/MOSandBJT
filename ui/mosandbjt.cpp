@@ -302,6 +302,7 @@ void MOSandBJT::mouseMoveEvent(QMouseEvent *event)
 //------------------------------------------------------------------------------
 void MOSandBJT::on_calculate_pushButton_clicked()
 {
+
     int currentTab = ui->tabWidget->currentIndex();
 
     if (currentTab == 0) {  // MOS 分析頁籤
@@ -310,10 +311,13 @@ void MOSandBJT::on_calculate_pushButton_clicked()
 
         // 2. 驗證參數合法性
         std::string errorMsg;
+
         if (!m_mosfet->validateParameters(errorMsg)) {//<<在這邊就把程式給關了
             QMessageBox::warning(this, "參數錯誤", QString::fromStdString(errorMsg));
             return;
         }
+        //如果把這個判斷式刪除,會直接執行plotMosfetCurves();
+        //但好笑的是,plotMosfetCurves();並不會呼叫mosfet演算法中任何一個函數
 
         // 3. 執行繪圖連動
         plotMosfetCurves();
@@ -506,19 +510,32 @@ void MOSandBJT::plotMosfetCurves()
     } else {
         // 轉移特性
         double vds = 10.0;
-        std::vector<Point> points = m_mosfet->transferCurve(vds);
+        //std::vector<Point> points = m_mosfet->transferCurve(vds);
 
+        // --- 核心修正：讓 X 軸自動算到 Id_max 需要的電壓 ---
+        double vth = m_mosfet->getParameter("Vth");
+        double kn = ui->Kn_lineEdit->text().toDouble();
+        double idMax = ui->Id_lineEdit->text().toDouble();
+
+        // 反推需要的 VgsMax = Vth + sqrt(IdMax / Kn)
+        double vgsNeededForMax = vth + std::sqrt(idMax / kn);
+        double scanEnd = vgsNeededForMax * 1.1; // 這是我們要掃描的終點
+
+
+        // 2. 【核心修正】：呼叫「指定範圍」的演算法版本
+        // 傳入 scanEnd，讓 MOSFET 算到 18V，而不是只算到 7V
+        std::vector<Point> points = m_mosfet->transferCurve(vds, 0.0, scanEnd);
         m_curveData.clear();
-
         m_curveData.append(UICurveData(toQtPoints(points), QString("Vds=%1V").arg(vds)));
 
         // 轉移特性的 X 軸是 Vgs，範圍通常不需要到 Vdss 那麼大
         // 設定顯示範圍
         m_xMin = 0;
-        m_xMax = 10;
+        m_xMax = scanEnd; // 多給 10% 裕度
         // [修正處]: 同樣加上 10% 裕度，避免頂到天花板
         m_yMin = 0;
-        m_yMax = m_mosfet->getParameter("Id_max")* 1.10;
+        m_yMax = idMax*1.1;
+        //m_yMax = m_mosfet->getParameter("Id_max")* 1.10;
 
         settings.xPrecision = 2; // Vgs 通常需要看比較細
     }
@@ -758,7 +775,7 @@ void MOSandBJT::on_mosfetParameter_changed()
 {
     bool okVth, okRds;
     double vth = ui->Vth_lineEdit->text().toDouble(&okVth);
-    double rds_mOhm = ui->Rds_lineEdit->text().toDouble(&okRds);
+    double rds_Ohm = ui->Rds_lineEdit->text().toDouble(&okRds);
 
     // 預設規格書測試時的 Vgs 電壓為 10V (一般常用值)
     double vgs_test = 10.0;
@@ -767,7 +784,7 @@ void MOSandBJT::on_mosfetParameter_changed()
     if (okVth) {
         if (okRds) {
             // 單位換算：mOhm 轉成 Ohm
-            double rds_Ohm = rds_mOhm / 1000.0;
+            double rds_mOhm = rds_Ohm/1000;
 
             // 呼叫你已經寫在 MOSFET 裡的演算法
             double calculatedKn = m_mosfet->calculateKnFromRds(rds_Ohm, vgs_test, vth);
@@ -794,8 +811,6 @@ void MOSandBJT::on_Save_pushButton_clicked() {
 
     // 2. 調用您 curveexporter.cpp 裡已經寫好的專業格式化函數
     std::string csvContent = CurveExporter::formatProfessionalCSV(bundle);
-    /*mosandbjt.cpp:792:30: Use of undeclared identifier 'CurveExporter'
-     */
 
     // 3. 調用您 File_save.cpp 裡已經寫好的產生檔名與寫入功能
     std::string prefix = m_isMosfetMode ? "MOS_" : "BJT_";

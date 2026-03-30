@@ -159,7 +159,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>mΩ</string>
+        <string>Ω</string>
        </property>
       </widget>
       <widget class="QLabel" name="label_8">
@@ -1026,7 +1026,7 @@ border: 1px solid gray;</string>
      <x>0</x>
      <y>0</y>
      <width>1253</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFunction">

@@ -42,13 +42,13 @@ std::string MOSFET::subtype() const
 // 參數設定與讀取
 void MOSFET::setParameter(const std::string& name, double value)
 {
-    if (name == "Vth") m_Vth = value;
-    else if (name == "Kn") m_Kn = value;
-    else if (name == "lambda") m_lambda = value;
-    else if (name == "Rds_on") m_Rds_on = value;
-    else if (name == "gfs") m_gfs = value;
-    else if (name == "Id_max") m_Id_max = value;
-    else if (name == "Vds_max") m_Vds_max = value;
+    if (name == "Vth") m_Vth = std::abs(value);
+    else if (name == "Kn") m_Kn = std::abs(value);
+    else if (name == "lambda") m_lambda = std::abs(value);
+    else if (name == "Rds_on") m_Rds_on = std::abs(value);
+    else if (name == "gfs") m_gfs = std::abs(value);
+    else if (name == "Id_max") m_Id_max = std::abs(value);
+    else if (name == "Vds_max") m_Vds_max = std::abs(value);
     // 忽略不認識的參數
 }
 
@@ -71,7 +71,7 @@ std::vector<std::string> MOSFET::paramList() const
 
 // 參數驗證
 bool MOSFET::validateParameters(std::string& errorMsg) const
-{
+{   /*
     if (m_isNChannel && m_Vth <= 0) {
         errorMsg = "N-channel MOSFET Vth 必須大於 0";
         return false;
@@ -79,7 +79,8 @@ bool MOSFET::validateParameters(std::string& errorMsg) const
     if (!m_isNChannel && m_Vth >= 0) {
         errorMsg = "P-channel MOSFETVth 必須小於 0";
         return false;
-    }
+    }*/
+
     if (m_Kn <= 0) {
         errorMsg = "Kn 必須大於 0";
         return false;
@@ -128,7 +129,7 @@ std::vector<Point> MOSFET::outputCurve(double Vgs) const
 
         // 統一公式計算 Id
         // Id = Kn * [ 2 * Vsat * Vds_eff - Vds_eff^2 ] * (1 + lambda * Vds)
-        double id = m_Kn * (2.0 * v_sat * vds_eff - vds_eff * vds_eff) * (1.0 + m_lambda * vds);
+        double id = m_Kn * (2.0 * v_sat * vds_eff - (vds_eff * vds_eff)) * (1.0 + m_lambda * vds);
 
         // 限制電流不超過最大限制
         if (id > m_Id_max) {
@@ -226,7 +227,12 @@ double MOSFET::calculateKnFromRds(double rdsOn, double vgsAtRds, double vth)
     }
 
     // 2. 計算過驅動電壓 (Overdrive Voltage)
+    if (rdsOn <= 0.001) rdsOn = 0.001; // 防呆：電阻不准小於 1mOhm，避免 Kn 爆炸
+
     double vov = vgsAtRds - vth;
+
+    if (vov <= 0) return 0.0;
+
 
     // 3. 安全檢查：確保測試電壓高於開啟電壓
     if (vov <= 0.0) {
@@ -259,6 +265,7 @@ double MOSFET::calculateKnFromRds(double rdsOn, double vgsAtRds, double vth)
     // 公式來源：Rds(on) = 1 / [2 * Kn * (Vgs - Vth)]
     // Kn(Vge-Vth) =1/(Rds(on)*2)
     // Kn=1/(2* Rds(on)* (Vgs -Vth))
+
     double kn = 1.0 / (2.0 * rdsOn * vov);
 
     return kn;
@@ -350,12 +357,13 @@ BiasPoint MOSFET::calculateQPoint_FixedVgs(double Vdd, double Rd, double Vgs) co
     double effectiveVds_max = m_Vds_max;
     double effectiveId_max = m_Id_max;
 
+    /*
     if (!m_isNChannel) {
-        effectiveVdd = -Vdd;
-        effectiveVgs = -Vgs;
-        effectiveVth = -m_Vth;
-        effectiveVds_max = -m_Vds_max;
-    }
+        effectiveVdd = std::abs(Vdd);
+        effectiveVgs = std::abs(Vgs);
+        effectiveVth = std::abs(m_Vth);
+        effectiveVds_max = std::abs(m_Vds_max);
+    }*/
 
     // 檢查基本條件
     if (effectiveVdd <= 0.0 || Rd <= 0.0) {
@@ -802,7 +810,8 @@ double MOSFET::findIdFromVgs(double Vgs, double Vds) const
     if (effectiveVds < Vds_sat) {
         // 三極管區
         // Id = Kn * [2(Vgs - Vth)Vds - Vds²]
-        Id = m_Kn * (2.0 * Vgs_eff * effectiveVds - effectiveVds * effectiveVds);
+        Id = m_Kn * (2.0 * Vgs_eff * effectiveVds - effectiveVds * effectiveVds)
+                  * (1.0 + m_lambda * effectiveVds); // << 加入這一項;
                 // 在非常小的 Vds 時，用 Rds_on 修正
         if (effectiveVds < 1e-6 && m_Rds_on > 0) {
             double Id_linear = effectiveVds / m_Rds_on;

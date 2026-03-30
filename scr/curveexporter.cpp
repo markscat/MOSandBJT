@@ -20,6 +20,7 @@ bool CurveExporter::toCSV(const std::vector<Point>& curve,
         file << p.x << "," << p.y << "\n";
     }
 
+
     file.close();
     return true;
 }
