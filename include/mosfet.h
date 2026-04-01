@@ -2,34 +2,31 @@
 #define MOSFET_H
 
 //1. 輸出特性（Output Characteristics）：Id vs Vds
-//Id = Kn × [2(Vgs - Vth) × Vds - Vds²]
-//Id = Kn × (Vgs - Vth)² × (1 + λ × Vds)
-
-/*
- * 這兩個公式需要的參數：
- * Vth：臨界電壓（規格書一定有，通常給 min/typ/max）
- * Kn：導電參數（規格書通常沒有直接給）
+//
+//
+/**
+ * 1. 直流分析公式:
+ * Id =Kn 2*((Vgs-Vth)Vds_eff-Vds_eff^2)(1+λVds)
+ * Kn= 1/2*μn*Cox*W/L
+ * μn: 電子遷移率 (n-channel)
+ * Cox:單位面積閘氧化層電容
+ * W:通道寬度
+ * L:通道長度
  *
- * 2. 轉移特性（Transfer Characteristics）：Id vs Vgs
- * Id = Kn × (Vgs - Vth)²
- * 問題：Kn 從哪裡來？
+ * 2. 在飽和區中：
+ * Vdes_eff =(Vgs-Vth)
+ * Id = Kn (2*(Vgs-Vth)Vds_eff-Vds_eff^2)(1+λVds)
+ *    = Kn (2* Vds_eff^2- Vds_eff^2)(1+λVds)
+ *    = Kn*(Vds_eff^2)(1+λVds)
+ *    = 2*Kn[(Vgs-Vth)^2]*(1+λVds)
  *
- * 規格書不會直接給你 Kn，但可以用有給的參數反推：
+ * 3. 在線性區中:
+ * 1.  **電壓極小：**     Vds_eff = V_ds（因為還沒達到飽和門檻）。
+ * 2.  **忽略高次方：**    V_ds^2 項太小了，直接丟掉。
+ * 3.  **忽略微小修正：**  lambda*Vds 遠小於 1，所以 1 + lambda*V_ds 趨近於 1
+ * Id =Kn 2*((Vgs-Vth)Vds)
  *
- * 方法 A：用 Rds(on) 反推
- * Rds(on) 是在某個 Vgs 下（通常是 10V）測的
- * 在三極管區，當 Vds 很小時，Rds(on) ≈ 1 / [2 × Kn × (Vgs - Vth)]
- * 所以 Kn ≈ 1 / [2 × Rds(on) × (Vgs - Vth)]
- *
- * 方法 B：用 gfs 反推
- * gfs（轉導）= ∂Id/∂Vgs = 2 × Kn × (Vgs - Vth)
- * 所以 Kn = gfs / [2 × (Vgs - Vth)]
- *
- * 方法 C：用 Id(on) 反推
- * 有些規格書會給在某個 Vgs 和 Vds 下的 Id
- * 用 Id = Kn × (Vgs - Vth)² 反推 Kn
- *
- *3. λ（通道調變係數）怎麼來？
+ * 4. λ（通道調變係數）怎麼來？
  * λ 影響飽和區曲線的斜率，規格書通常沒有，但有幾種方式：
  * 方法 A：用輸出電阻 ro 反推
  * ro = 1 / (λ × Id)
@@ -42,6 +39,32 @@
  * 方法 C：用經驗值
  * 小訊號 MOSFET：λ ≈ 0.01 ~ 0.1
  * 功率 MOSFET：λ ≈ 0.001 ~ 0.01
+ *
+ * 5. Rds(on)
+ *   動態電阻
+ *   Id =Kn 2*((Vgs-Vth)Vds)
+ *   =>
+ *   Id/Vds = Kn 2*((Vgs-Vth)Vds)/Vds
+ *   ==>分母的Vds，和分子的Vds約分
+ *   ==>因為Rds= Vds/Id
+ *   所以：
+ *   Rds = Vds/Id = 1/{Kn 2*((Vgs-Vth)}
+ *
+ *   線性區中:
+ *   Vgs >> Vth
+ *   Vds 趨近於零
+ *   Rds(on)= Rds
+ *
+ *  Letex語法
+   \begin{array}
+   $I_{d}=2K_{n}*((V_{gs}-V_{th})*V_{ds-eff}-V_{ds-eff}^2)(1+λV_{ds})\\
+   Kn= \frac{\mu_{n}*C_{ox}*W}{2L} \\
+   \mu_{n}\text{:電子遷移率 (n-channel)/電洞遷移率 (p-channel) }\\
+   C_{ox}\text{:單位面積閘氧化層電容}\\
+   \text{W:通道寬度}\\
+   \text{L:通道長度}\end{array}
+
+
  */
 
 

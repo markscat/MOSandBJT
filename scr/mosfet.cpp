@@ -209,6 +209,7 @@ std::vector<Point> MOSFET::transferCurve(double Vds, double Vgs_start, double Vg
 
 
 /**
+ * Id =Kn [2*(Vgs-Vth)Vds_eff-Vds_eff^2](1+λVds)
  *
  * Kn : MOS 導通係數
  * 物理公式：
@@ -228,6 +229,7 @@ double MOSFET::calculateKnFromRds(double rdsOn, double vgsAtRds, double vth)
 
     // 2. 計算過驅動電壓 (Overdrive Voltage)
     if (rdsOn <= 0.001) rdsOn = 0.001; // 防呆：電阻不准小於 1mOhm，避免 Kn 爆炸
+
 
     double vov = vgsAtRds - vth;
 
