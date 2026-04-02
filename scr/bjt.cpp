@@ -95,16 +95,8 @@ double BJT::calculateVce_saturation(double Ib) const
 double BJT::calculateIc_active(double Ib, double Vce) const
 {
     // 處理極性，轉成正的來計算
-    double effectiveIb;
-    double effectiveVce;
-
-    if (m_isNPN) {
-        effectiveIb = Ib;
-        effectiveVce = Vce;
-    } else {
-        effectiveIb = -Ib;    // PNP：負的 Ib 轉成正的
-        effectiveVce = -Vce;  // PNP：負的 Vce 轉成正的
-    }
+    double effectiveIb=std::abs(Ib);
+    double effectiveVce=std::abs(Vce);
 
     // 如果輸入不合理，回傳 0
     if (effectiveIb <= 0.0 || effectiveVce < 0.0) {
@@ -266,21 +258,10 @@ std::vector<Point> BJT::outputCurve(double Ib) const
     points.reserve(m_curvePoints + 1);
 
     // 處理 PNP 的極性
-    double effectiveIb = Ib;
-    double effectiveVce_max = m_Vce_max;
+    double effectiveIb = std::abs(Ib);
+    double effectiveVce_max = std::abs(m_Vce_max);
 
-    if (!m_isNPN) {
-        // PNP：電流方向相反，電壓極性相反
-        effectiveIb = -Ib;           // Ib 為負時才導通
-        effectiveVce_max = -m_Vce_max; // Vce 掃描負電壓
-    }
 
-    // 如果 Ib <= 0（經過極性轉換後），截止區
-    if (effectiveIb <= 0) {
-        points.push_back(Point(0, 0));
-        points.push_back(Point(effectiveVce_max, 0));
-        return points;
-    }
 
     double Vce_sat = calculateVce_saturation(effectiveIb);
 
@@ -837,6 +818,34 @@ double BJT::findVceFromIc(double Ic, double Ib) const
         }
     }
 }
+
+
+// bjt.cpp 裡實作插值
+double BJT::getDynamicBeta(double currentIc) const {
+    if (m_betaPoints.empty()) return m_Beta;
+
+    // 取絕對值計算，不論 NPN/PNP
+    double absIc = std::abs(currentIc);
+
+    // 如果只有一點或電流太小/太大，直接回傳邊界值
+    if (absIc <= m_betaPoints.front().ic) return m_betaPoints.front().hfe;
+    if (absIc >= m_betaPoints.back().ic) return m_betaPoints.back().hfe;
+
+    // 對數線性插值 (Log-Log Interpolation)
+    for (size_t i = 0; i < m_betaPoints.size() - 1; ++i) {
+        if (absIc >= m_betaPoints[i].ic && absIc <= m_betaPoints[i+1].ic) {
+            double x0 = std::log10(m_betaPoints[i].ic);
+            double x1 = std::log10(m_betaPoints[i+1].ic);
+            double y0 = std::log10(m_betaPoints[i].hfe);
+            double y1 = std::log10(m_betaPoints[i+1].hfe);
+
+            double y = y0 + (y1 - y0) * (std::log10(absIc) - x0) / (x1 - x0);
+            return std::pow(10, y);
+        }
+    }
+    return m_Beta;
+}
+
 
 std::vector<Point> BJT::generateCurve(double inputParam) const
 {

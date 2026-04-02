@@ -200,6 +200,19 @@ void MOSandBJT::initializeTransistors()
     m_currentIb = 0.0;
     m_currentVce = 0.0;
     m_currentIc = 0.0;
+
+
+
+    // --- BJT 初始化 ---
+    m_bjt = new BJT();
+    m_bjt->setParameter("Beta", 100.0);
+    m_bjt->setParameter("Vbe_on", 0.7);
+    m_bjt->setParameter("Vce_sat", 0.2);
+    m_bjt->setParameter("Ic_max", 0.5);   // 500mA
+    m_bjt->setParameter("Vce_max", 40.0); // 40V
+
+    // 如果你有為 BJT 準備 LineEdit，可以在這裡填入預設值
+    // 例如：ui->Beta_lineEdit->setText("100");
 }
 
 
@@ -218,8 +231,27 @@ void MOSandBJT::setupUi()
     ui->OutOrtran_comboBox->addItem("轉移特性");
     ui->OutOrtran_comboBox->setCurrentIndex(0);
 
+
+    //------BJT------
+    ui->VEBOn_lineEdit->setReadOnly(true);
+    ui->VA_lineEdit->setReadOnly(true);
+
+    // 建議把背景調成淡淡的灰色或黃色，更有「顯示器」的感覺
+    ui->VEBOn_lineEdit->setStyleSheet("background-color: #f0f0f0;");
+    ui->VA_lineEdit->setStyleSheet("background-color: #f0f0f0;");
+
+    // 預設一個 Va 值（因為規格書通常抄不到，我們預設給 100V）
+    ui->VA_lineEdit->setText("100");
+
+    ui->BJT_OutOrtran_comboBox->addItem("輸出特性");
+    ui->BJT_OutOrtran_comboBox->addItem("輸入特性");
+    ui->BJT_OutOrtran_comboBox->addItem("轉移特性");
+    ui->BJT_OutOrtran_comboBox->setCurrentIndex(0);
+
+    //
+
     // 設定工作點標籤
-    ui->Work_Point_label->setText("工作點: --");
+
 }
 
 void MOSandBJT::setupPlot()
@@ -273,6 +305,9 @@ void MOSandBJT::setupConnections()
     connect(ui->Rds_lineEdit, &QLineEdit::editingFinished,
             this, &MOSandBJT::on_mosfetParameter_changed);
 
+
+    connect(ui->Load_pushButton, &QPushButton::clicked, this, &MOSandBJT::on_Load_pushButton_clicked);
+
 }
 
 
@@ -290,10 +325,9 @@ void MOSandBJT::mouseMoveEvent(QMouseEvent *event)
     if (!m_plotWidget->geometry().contains(pos)) return;
 
     // 轉換為圖表座標
-    QPointF plotCoord = pixelToPlotCoord(pos);
+    //QPointF plotCoord = pixelToPlotCoord(pos);
 
-    // 更新工作點標籤
-    updateWorkPointLabel(plotCoord);
+
 }
 
 
@@ -323,7 +357,34 @@ void MOSandBJT::on_calculate_pushButton_clicked()
         plotMosfetCurves();
 
     } else if (currentTab == 2) {  // BJT 分析頁籤
-        QMessageBox::information(this, "提示", "BJT 功能尚未實作");
+       // 1. 讀取 Beta 數據表 (單位換算：mA -> A)
+        double ic1 = ui->IC_Beta1_lineEdit->text().toDouble() / 1000.0;
+        double hfe1 = ui->Beta1_lineEdit->text().toDouble();
+
+        double vbe_sat = ui->Vbe_lineEdit->text().toDouble();
+
+        // 2. 自動計算 Vbe(on)
+        // 假設使用者以點 1 的測試條件作為基準
+        if (hfe1 > 0 && vbe_sat > 0) {
+            double vt = 0.0257; // 25度C
+            // 公式反推 (強制 Beta 設為 10 是規格書常用測試條件)
+            double vbe_on = vbe_sat - vt * std::log(hfe1 / 10.0);
+
+            // 3. 更新唯讀欄位
+            ui->VEBOn_lineEdit->setText(QString::number(vbe_on, 'f', 3));
+        }
+
+        // 4. 同步參數到 BJT 物件並開始繪圖 (這部分維持你原本的 plotBjtCurves)
+        loadBjtParameters();
+
+        // 驗證參數
+        std::string errorMsg;
+        if (!m_bjt->validateParameters(errorMsg)) {
+            QMessageBox::warning(this, "參數錯誤", QString::fromStdString(errorMsg));
+            return;
+        }
+
+        plotBjtCurves();
     }
 }
 
@@ -373,8 +434,73 @@ void MOSandBJT::on_tabWidget_currentChanged(int index)
         ui->V_label->setText("Vce(V)");
     }*/
 
-    // 清空工作點標籤
-    ui->Work_Point_label->setText("工作點: --");
+
+
+}
+void MOSandBJT::on_Load_pushButton_clicked()
+{
+    // 1. 取得 UI 物件 (注意您的 XML 中 Vgs 是 Id_load_lineEdit_2)
+    QLineEdit* editVds = ui->Vds_load_lineEdit;
+    QLineEdit* editId  = ui->Id_load_lineEdit;
+    QLineEdit* editVgs = ui->Vgs_load_lineEdit;
+
+    // 1. 取得 UI 物件並清理字串 (去掉前後空白)
+    QString strVds = ui->Vds_load_lineEdit->text().trimmed();
+    QString strId  = ui->Id_load_lineEdit->text().trimmed();
+    QString strVgs = ui->Vgs_load_lineEdit->text().trimmed();
+
+    bool hasVds = !strVds.isEmpty();
+    bool hasId  = !strId.isEmpty();
+    bool hasVgs = !strVgs.isEmpty();
+
+    // 確保參數已同步到 m_mosfet 物件
+    loadMosfetParameters();
+
+    double vds = editVds->text().toDouble();
+    double id  = editId->text().toDouble();
+    double vgs = editVgs->text().toDouble();
+
+    // 2. 進行三選二計算 智慧判斷計算目標
+    // 邏輯：優先計算被「留空」的那一個；若都填了，優先重新計算 Id
+
+    if (hasVds && hasVgs && (!hasId || (hasId && hasVds && hasVgs))) {
+        // 狀況 A: 有 Vds, Vgs。不論 Id 有沒有值，都更新 Id (最常見狀況)
+        id = m_mosfet->findIdFromVgs(vgs, vds);
+        ui->Id_load_lineEdit->setText(QString::number(id, 'f', 3));
+    }
+    else if (hasVgs && hasId && !hasVds) {
+        // 狀況 B: 想求 Vds (使用者必須手動清空 Vds 框)
+        vds = m_mosfet->findVdsFromId(id, vgs);
+        ui->Vds_load_lineEdit->setText(QString::number(vds, 'f', 2));
+    }
+    else if (hasVds && hasId && !hasVgs) {
+        // 狀況 C: 想求 Vgs (使用者必須手動清空 Vgs 框)
+        vgs = m_mosfet->findVgsFromId(id, vds);
+        ui->Vgs_load_lineEdit->setText(QString::number(vgs, 'f', 2));
+    }
+    else {
+        QMessageBox::information(this, "使用提示",
+                                 "請至少輸入兩個參數。\n若要重新計算特定數值，請先將該輸入框清空。");
+        return;
+    }
+
+
+    // 3. 安全檢查：如果計算結果異常（例如電壓未達開啟門檻）
+    if (id < 0) id = 0;
+
+    // 4. 設定負載線與更新畫布
+    // 注意：如果還沒按過大視窗的「計算」，m_xMax 可能是預設值
+    m_loadLine.active = true;
+    m_loadLine.vds_q = vds;
+    m_loadLine.id_q = id;
+    m_loadLine.vgs_q = vgs;
+
+    // 4. 更新畫布
+    PlotCanvas *canvas = qobject_cast<PlotCanvas*>(m_plotWidget);
+    if (canvas) {
+        // 我們需要擴充 PlotCanvas 的函式
+        canvas->setLoadLine(vds, id, m_xMax);
+    }
 }
 
 
@@ -457,6 +583,28 @@ void MOSandBJT::loadMosfetParameters()
     // Vds_max
     double vdsMax = ui->Vdss_lineEdit->text().toDouble(&ok);
     if (ok) m_mosfet->setParameter("Vds_max", vdsMax);
+}
+void MOSandBJT::loadBjtParameters() {
+    bool ok;
+    // 讀取 Beta (hFE)
+    double beta = ui->Beta1_lineEdit->text().toDouble(&ok);
+    if (ok) m_bjt->setParameter("Beta", beta);
+
+    // 讀取 Early Voltage (Va)
+    double va = ui->VA_lineEdit->text().toDouble(&ok);
+    if (ok) m_bjt->setParameter("Va", va);
+
+    // 讀取最大電流 (Ic_max) - 單位換算：mA 轉 A
+    double icMax = ui->IC_max_ineEdit->text().toDouble(&ok) / 1000.0;
+    if (ok) m_bjt->setParameter("Ic_max", icMax);
+
+    // 讀取最大電壓 (Vce_max)
+    double vceMax = ui->Vce_max_ineEdit_2->text().toDouble(&ok);
+    if (ok) m_bjt->setParameter("Vce_max", vceMax);
+
+    // 讀取飽和電壓 (Vce_sat)
+    double vceSat = ui->VCEsat_lineEdit->text().toDouble(&ok);
+    if (ok) m_bjt->setParameter("Vce_sat", vceSat);
 }
 
 
@@ -632,10 +780,52 @@ void MOSandBJT::paintEvent(QPaintEvent *event)
     }
 }
 */
+void MOSandBJT::plotBjtCurves() {
+    if (!m_plotWidget) return;
+    clearPlot();
 
-void MOSandBJT::plotBjtCurves()
-{
-    // 以後實作
+    PlotAxisSettings settings;
+    double icMax = m_bjt->getParameter("Ic_max");
+    double vceMax = m_bjt->getParameter("Vce_max");
+    double beta = m_bjt->getParameter("Beta");
+
+    if (ui->BJT_OutOrtran_comboBox->currentIndex() == 0) { // 輸出特性 (Ic vs Vce)
+        // 自動計算 Ib 步進，讓最高的一條線接近 Ic_max
+        double maxIbNeeded = icMax / beta;
+        QVector<double> ibList = generateParamList(0.0, maxIbNeeded, 8);
+
+        // 呼叫 template 函數產生數據
+        m_curveData = generateOutputCurves(*m_bjt, ibList, "Ib=");
+
+        m_xMin = 0; m_xMax = vceMax * 1.1;
+        m_yMin = 0; m_yMax = icMax * 1.1;
+
+        settings.xLabel = "Vce";
+        settings.yLabel = "Ic";
+        settings.xUnit  = "V";
+        settings.yUnit  = "A";
+    }
+    else if (ui->BJT_OutOrtran_comboBox->currentIndex() == 2) { // 轉移特性 (Ic vs Ib)
+        double testVce = 5.0; // 固定測試電壓
+        double maxIb = (icMax / beta) * 1.5; // 掃描到 Ic_max 的 1.5 倍範圍
+
+        std::vector<Point> points = m_bjt->transferCurve(testVce, 0.0, maxIb);
+        m_curveData.append(UICurveData(toQtPoints(points), QString("Vce=%1V").arg(testVce)));
+
+        m_xMin = 0; m_xMax = maxIb;
+        m_yMin = 0; m_yMax = icMax * 1.1;
+
+        settings.xLabel = "Ib";
+        settings.yLabel = "Ic";
+        settings.xUnit  = "A";
+        settings.yUnit  = "A";
+    }
+
+    // 更新畫布
+    PlotCanvas *canvas = qobject_cast<PlotCanvas*>(m_plotWidget);
+    if (canvas) {
+        canvas->setData(m_curveData, m_xMax, m_yMax, settings);
+    }
 }
 
 void MOSandBJT::clearPlot()
@@ -646,7 +836,7 @@ void MOSandBJT::clearPlot()
     }
 }
 
-
+/*
 void MOSandBJT::updateWorkPointLabel(const QPointF& pos)
 {
     // 檢查座標是否在合理範圍內
@@ -685,7 +875,7 @@ void MOSandBJT::updateWorkPointLabel(const QPointF& pos)
 
     ui->Work_Point_label->setText(text);
 }
-
+*/
 
 
 //------------------------------------------------------------------------------

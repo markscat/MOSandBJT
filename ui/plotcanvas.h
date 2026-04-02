@@ -23,6 +23,15 @@ class PlotCanvas : public QWidget
 {
     Q_OBJECT
 public:
+
+    // 設定負載線點 (Vds, Id) 以及 X 軸截距 (Vdd)
+    void setLoadLine(double vq, double iq, double vdd) {
+        m_showLoadLine = true;
+        m_vQ = vq; m_iQ = iq; m_vDD = vdd;
+        update();
+    }
+
+
     explicit PlotCanvas(QWidget *parent = nullptr);
 
     // 讓主視窗傳入數據的方法
@@ -89,6 +98,9 @@ private:
     bool m_enableCrosshair = true; // 預設開啟
 
     PlotAxisSettings m_settings;
+
+    bool m_showLoadLine = false;
+    double m_vQ = 0, m_iQ = 0, m_vDD = 0;
 
 
 };

@@ -226,6 +226,39 @@ void PlotCanvas::paintEvent(QPaintEvent *event)
         // 呼叫左下角資訊提示框
         drawHintBox(painter);
     }
+
+    // 在最後繪製負載線與工作點
+    if (m_showLoadLine) {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        // 1. 繪製負載線 (連接 VDD 到 Y 軸的直線)
+        // 根據兩點式: 通過 (Vdd, 0) 和 (Vq, Iq) 的直線
+        // 當 Vds = 0 時, Id_intercept = Iq * Vdd / (Vdd - Vq)
+        double id_intercept = m_iQ * m_vDD / (m_vDD - m_vQ);
+
+        QPen linePen(Qt::red, 2, Qt::DashDotLine);
+        painter.setPen(linePen);
+
+        int xStart = valToPxX(m_vDD);
+        int yStart = valToPxY(0);
+        int xEnd = valToPxX(0);
+        int yEnd = valToPxY(id_intercept);
+
+        painter.drawLine(xStart, yStart, xEnd, yEnd);
+
+        // 2. 繪製工作點 Q-Point (一個明顯的紅點)
+        painter.setBrush(Qt::red);
+        painter.setPen(QPen(Qt::black, 1));
+        int qx = valToPxX(m_vQ);
+        int qy = valToPxY(m_iQ);
+        painter.drawEllipse(QPoint(qx, qy), 5, 5);
+
+        // 3. 標註文字
+        painter.setPen(Qt::red);
+        painter.drawText(qx + 10, qy - 10, QString("Q(%1V, %2A)").arg(m_vQ, 0, 'f', 2).arg(m_iQ, 0, 'f', 3));
+    }
+
 }
 
 #endif

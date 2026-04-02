@@ -51,6 +51,9 @@ private slots:
     //存檔
     void on_Save_pushButton_clicked();
 
+    // 計算負載線的按鍵
+    void on_Load_pushButton_clicked();
+
 
 private:
     // 初始化相關
@@ -59,6 +62,9 @@ private:
     void setupPlot();
     void setupConnections();
     void loadMosfetParameters();
+
+    void loadBjtParameters();
+
 
     // 繪圖相關
     void plotMosfetCurves();
@@ -123,6 +129,19 @@ private:
     static constexpr double PLOT_MARGIN_RIGHT = 20;
     static constexpr double PLOT_MARGIN_TOP = 20;
     static constexpr double PLOT_MARGIN_BOTTOM = 50;
+
+
+    // 儲存負載線資訊的結構
+    struct LoadLineData {
+        bool active = false;
+        double vds_q = 0;
+        double id_q = 0;
+        double vgs_q = 0;
+        double vdd = 0; // 負載線與 X 軸的交點 (供應電壓)
+    };
+
+    LoadLineData m_loadLine;
+
 
 //protected:
     //void paintEvent(QPaintEvent *event) override;

@@ -24,6 +24,12 @@
 * 
 */
 
+// bjt.h
+struct BetaPoint {
+    double ic;
+    double hfe;
+    double Vce;
+};
 
 
 class BJT : public Transistor,public CurveDrawable
@@ -250,6 +256,9 @@ private:
 
     int m_curvePoints;   // 曲線取點數量
 
+
+    std::vector<BetaPoint> m_betaPoints;
+
     // 內部計算函式
 	/**@brief calculateIc_active(double Ib, double Vce) const;
 	* @brief 計算主動區的集極電流
@@ -307,9 +316,9 @@ private:
 
     BiasPoint calculateQPoint_VoltageDivider(double Vcc, double Rc, double Re, double R1, double R2) const;
 
-    //BiasPoint calculateQPoint_FourResistor(double Vcc, double Rc, double Re, double R1, double R2);
     BiasPoint calculateQPoint_FourResistor(double Vcc, double Rc, double Re, double R1, double R2) const;
 
+    double getDynamicBeta(double currentIc) const;
 
 };
 
