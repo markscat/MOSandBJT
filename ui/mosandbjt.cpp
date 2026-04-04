@@ -346,12 +346,10 @@ void MOSandBJT::on_calculate_pushButton_clicked()
         // 2. 驗證參數合法性
         std::string errorMsg;
 
-        if (!m_mosfet->validateParameters(errorMsg)) {//<<在這邊就把程式給關了
+        if (!m_mosfet->validateParameters(errorMsg)) {
             QMessageBox::warning(this, "參數錯誤", QString::fromStdString(errorMsg));
             return;
         }
-        //如果把這個判斷式刪除,會直接執行plotMosfetCurves();
-        //但好笑的是,plotMosfetCurves();並不會呼叫mosfet演算法中任何一個函數
 
         // 3. 執行繪圖連動
         plotMosfetCurves();

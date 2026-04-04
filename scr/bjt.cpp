@@ -103,8 +103,14 @@ double BJT::calculateIc_active(double Ib, double Vce) const
         return 0.0;
     }
 
-    // 主動區公式（用正值計算）
-    double Ic = m_Beta * effectiveIb * (1.0 + effectiveVce / m_Va);
+
+    // 1. 取得動態 Beta（傳入 Vce_abs 確保查找正確）
+    double dynamicBeta = getDynamicBeta(effectiveIb * m_Beta, effectiveVce);
+
+    // 2. 物理公式計算 (Ic = Beta * Ib * (1 + Vce/Va))
+    double Ic = dynamicBeta * effectiveIb * (1.0 + effectiveVce / m_Va);
+
+
 
     // 限制電流大小
     if (Ic > m_Ic_max) {
@@ -820,32 +826,63 @@ double BJT::findVceFromIc(double Ic, double Ib) const
 }
 
 
-// bjt.cpp 裡實作插值
-double BJT::getDynamicBeta(double currentIc) const {
-    if (m_betaPoints.empty()) return m_Beta;
 
-    // 取絕對值計算，不論 NPN/PNP
-    double absIc = std::abs(currentIc);
+// bjt.cpp
 
-    // 如果只有一點或電流太小/太大，直接回傳邊界值
-    if (absIc <= m_betaPoints.front().ic) return m_betaPoints.front().hfe;
-    if (absIc >= m_betaPoints.back().ic) return m_betaPoints.back().hfe;
+double BJT::getDynamicBeta(double currentIc, double currentVce) const {
+    if (m_dataCount < 3) return m_Beta;
 
-    // 對數線性插值 (Log-Log Interpolation)
-    for (size_t i = 0; i < m_betaPoints.size() - 1; ++i) {
-        if (absIc >= m_betaPoints[i].ic && absIc <= m_betaPoints[i+1].ic) {
-            double x0 = std::log10(m_betaPoints[i].ic);
-            double x1 = std::log10(m_betaPoints[i+1].ic);
-            double y0 = std::log10(m_betaPoints[i].hfe);
-            double y1 = std::log10(m_betaPoints[i+1].hfe);
+    // 1. 轉為對數座標
+    double targetIc = std::abs(currentIc) + 1e-12;
+    double targetX  = std::log10(targetIc);
 
-            double y = y0 + (y1 - y0) * (std::log10(absIc) - x0) / (x1 - x0);
-            return std::pow(10, y);
-        }
+    double x[3], y[3];
+    for (int i = 0; i < 3; ++i) {
+        x[i] = std::log10(m_betaPoints[i].ic + 1e-12);
+        y[i] = std::log10(m_betaPoints[i].hfe + 1e-12);
     }
-    return m_Beta;
-}
 
+    double targetY;
+
+    // 2. 【邊界判斷與處理】
+    if (targetX < x[0]) {
+        // --- 情況 A：電流比你給的第一組數據還小 ---
+        // 使用點 0 和 點 1 的斜率進行線性外推（在 Log 軸上是線性的）
+        double slope = (y[1] - y[0]) / (x[1] - x[0]);
+        targetY = y[0] + slope * (targetX - x[0]);
+    }
+    else if (targetX > x[2]) {
+        // --- 情況 B：電流比你給的最後一組數據還大 (最常見的 Beta Roll-off) ---
+        // 使用點 1 和 點 2 的斜率外推，模擬高電流下的增益衰減
+        double slope = (y[2] - y[1]) / (x[2] - x[1]);
+        targetY = y[2] + slope * (targetX - x[2]);
+    }
+    else {
+        // --- 情況 C：在區間內，使用完美的二次拉格朗日計算 ---
+        double L0 = ((targetX - x[1]) * (targetX - x[2])) / ((x[0] - x[1]) * (x[0] - x[2]));
+        double L1 = ((targetX - x[0]) * (targetX - x[2])) / ((x[1] - x[0]) * (x[1] - x[2]));
+        double L2 = ((targetX - x[0]) * (targetX - x[1])) / ((x[2] - x[0]) * (x[2] - x[1]));
+        targetY = (L0 * y[0]) + (L1 * y[1]) + (L2 * y[2]);
+    }
+
+    // 3. 轉回真實 Beta
+    double dynamicBeta = std::pow(10, targetY);
+
+    // 4. Vce 修正 (不變，依然基於 Va 進行動態增量)
+    double refVce = m_betaPoints[0].Vce;
+    if (m_Va > 0) {
+        dynamicBeta *= (1.0 + (std::abs(currentVce) - refVce) / m_Va);
+    }
+
+    // 5. 終極保險：防止外推導致 Beta 變成負數或無限大
+    // 就算外推，Beta 也不應該低於 1 (這就不叫放大器了)
+    if (dynamicBeta < 1.0) dynamicBeta = 1.0;
+    // 不應該超過你給的最大 Beta 的 1.5 倍，防止外推過頭
+    double maxPossible = std::max({m_betaPoints[0].hfe, m_betaPoints[1].hfe, m_betaPoints[2].hfe}) * 1.5;
+    if (dynamicBeta > maxPossible) dynamicBeta = maxPossible;
+
+    return dynamicBeta;
+}
 
 std::vector<Point> BJT::generateCurve(double inputParam) const
 {

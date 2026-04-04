@@ -25,7 +25,7 @@
 */
 
 // bjt.h
-struct BetaPoint {
+struct BetaDataPoint {
     double ic;
     double hfe;
     double Vce;
@@ -257,7 +257,8 @@ private:
     int m_curvePoints;   // 曲線取點數量
 
 
-    std::vector<BetaPoint> m_betaPoints;
+    BetaDataPoint m_betaPoints[3]; // 直接開 3 個陣列存你 UI 那三組
+    int m_dataCount = 0;           // 記錄到底填了幾組
 
     // 內部計算函式
 	/**@brief calculateIc_active(double Ib, double Vce) const;
@@ -318,7 +319,7 @@ private:
 
     BiasPoint calculateQPoint_FourResistor(double Vcc, double Rc, double Re, double R1, double R2) const;
 
-    double getDynamicBeta(double currentIc) const;
+    double getDynamicBeta(double currentIc, double currentVce) const;
 
 };
 
