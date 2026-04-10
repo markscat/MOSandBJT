@@ -1425,7 +1425,7 @@ border: 1px solid gray;</string>
       <property name="frameShadow">
        <enum>QFrame::Shadow::Raised</enum>
       </property>
-      <widget class="PlotCanvas" name="VJTPlot_widget" native="true">
+      <widget class="PlotCanvas" name="BJTPlot_widget" native="true">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -1825,7 +1825,7 @@ border: 1px solid gray;</string>
         <string>Vce_Max</string>
        </property>
       </widget>
-      <widget class="QLineEdit" name="Vce_max_ineEdit_2">
+      <widget class="QLineEdit" name="Vce_max_lineEdit">
        <property name="geometry">
         <rect>
          <x>80</x>

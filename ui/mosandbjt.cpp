@@ -147,7 +147,7 @@ void MOSandBJT::initializeTransistors()
     // 補上 Rds(on) 的 UI 顯示（例如建構子是 0.1 Ohm，UI 顯示 100 mOhm）
     ui->Rds_lineEdit->setText(QString::number(m_mosfet->getParameter("Rds_on") * 1000.0));
 
-
+    on_tabWidget_currentChanged(ui->tabWidget->currentIndex());
 
     // 建立 BJT 並設定預設值（先保留，以後再用）
     m_bjt = new BJT();
@@ -201,8 +201,6 @@ void MOSandBJT::initializeTransistors()
     m_currentVce = 0.0;
     m_currentIc = 0.0;
 
-
-
     // --- BJT 初始化 ---
     m_bjt = new BJT();
     m_bjt->setParameter("Beta", 100.0);
@@ -210,6 +208,9 @@ void MOSandBJT::initializeTransistors()
     m_bjt->setParameter("Vce_sat", 0.2);
     m_bjt->setParameter("Ic_max", 0.5);   // 500mA
     m_bjt->setParameter("Vce_max", 40.0); // 40V
+
+
+
 
     // 如果你有為 BJT 準備 LineEdit，可以在這裡填入預設值
     // 例如：ui->Beta_lineEdit->setText("100");
@@ -257,7 +258,25 @@ void MOSandBJT::setupUi()
 void MOSandBJT::setupPlot()
 {
     // 取得繪圖區域的 widget
-    m_plotWidget = ui->mosPlot_widget;
+    //m_plotWidget = ui->mosPlot_widget;
+
+
+
+    // 初始化 MOS 畫布
+    if (ui->mosPlot_widget) {
+        ui->mosPlot_widget->setAttribute(Qt::WA_OpaquePaintEvent, true);
+        ui->mosPlot_widget->setAttribute(Qt::WA_NoSystemBackground, true);
+        ui->mosPlot_widget->setMouseTracking(true);
+    }
+
+    // 初始化 BJT 畫布（名稱已修正）
+    if (ui->BJTPlot_widget) {
+        ui->BJTPlot_widget->setAttribute(Qt::WA_OpaquePaintEvent, true);
+        ui->BJTPlot_widget->setAttribute(Qt::WA_NoSystemBackground, true);
+        ui->BJTPlot_widget->setMouseTracking(true);
+    }
+
+
     if (!m_plotWidget) return;
 
     // 設定一些繪圖相關的初始值
@@ -355,24 +374,6 @@ void MOSandBJT::on_calculate_pushButton_clicked()
         plotMosfetCurves();
 
     } else if (currentTab == 2) {  // BJT 分析頁籤
-       // 1. 讀取 Beta 數據表 (單位換算：mA -> A)
-        double ic1 = ui->IC_Beta1_lineEdit->text().toDouble() / 1000.0;
-        double hfe1 = ui->Beta1_lineEdit->text().toDouble();
-
-        double vbe_sat = ui->Vbe_lineEdit->text().toDouble();
-
-        // 2. 自動計算 Vbe(on)
-        // 假設使用者以點 1 的測試條件作為基準
-        if (hfe1 > 0 && vbe_sat > 0) {
-            double vt = 0.0257; // 25度C
-            // 公式反推 (強制 Beta 設為 10 是規格書常用測試條件)
-            double vbe_on = vbe_sat - vt * std::log(hfe1 / 10.0);
-
-            // 3. 更新唯讀欄位
-            ui->VEBOn_lineEdit->setText(QString::number(vbe_on, 'f', 3));
-        }
-
-        // 4. 同步參數到 BJT 物件並開始繪圖 (這部分維持你原本的 plotBjtCurves)
         loadBjtParameters();
 
         // 驗證參數
@@ -416,7 +417,7 @@ void MOSandBJT::on_OutOrtran_comboBox_currentIndexChanged(int index)
     }
 }
 
-
+#ifdef old
 void MOSandBJT::on_tabWidget_currentChanged(int index)
 {
     // 0: MOS 分析, 1: MOS小訊號, 2: BJT分析, 3: BJT小訊號
@@ -431,10 +432,26 @@ void MOSandBJT::on_tabWidget_currentChanged(int index)
         ui->Id_label->setText("Ic(A)");
         ui->V_label->setText("Vce(V)");
     }*/
-
-
-
 }
+#endif
+
+void MOSandBJT::on_tabWidget_currentChanged(int index)
+{
+    m_isMosfetMode = (index == 0 || index == 1);
+
+    if (m_isMosfetMode) {
+        m_plotWidget = ui->mosPlot_widget;
+    } else {
+        m_plotWidget = ui->BJTPlot_widget;  // 名稱已修正
+    }
+
+    if (m_plotWidget) {
+        m_plotWidget->update();
+    }
+}
+
+
+
 void MOSandBJT::on_Load_pushButton_clicked()
 {
     // 1. 取得 UI 物件 (注意您的 XML 中 Vgs 是 Id_load_lineEdit_2)
@@ -539,6 +556,8 @@ void MOSandBJT::onNumpadEqualPressed(QString expression)
     // 或者你要在這裡計算結果也可以
 }
 
+
+
 // 如果用傳統 SIGNAL/SLOT
 void MOSandBJT::onNumpadClosed()
 {
@@ -584,23 +603,37 @@ void MOSandBJT::loadMosfetParameters()
 }
 void MOSandBJT::loadBjtParameters() {
     bool ok;
-    // 讀取 Beta (hFE)
-    double beta = ui->Beta1_lineEdit->text().toDouble(&ok);
-    if (ok) m_bjt->setParameter("Beta", beta);
 
-    // 讀取 Early Voltage (Va)
+    // 1. 讀取三組 Beta 數據 (單位換算：mA -> A)
+    double ic1 = ui->IC_Beta1_lineEdit->text().toDouble(&ok) / 1000.0;
+    double hfe1 = ui->Beta1_lineEdit->text().toDouble(&ok);
+
+    double ic2 = ui->IC_Beta2_lineEdit->text().toDouble(&ok) / 1000.0;
+    double hfe2 = ui->Beta2_lineEdit->text().toDouble(&ok);
+
+    double ic3 = ui->IC_Beta3_lineEdit->text().toDouble(&ok) / 1000.0;
+    double hfe3 = ui->Beta3_lineEdit->text().toDouble(&ok);
+
+    // 2. 設定 Beta Table 到 BJT 物件
+    m_bjt->setBetaPoints(ic1, hfe1, ic2, hfe2, ic3, hfe3);
+
+    // 3. 讀取 Vbe_on (從唯讀欄位，或讓使用者直接輸入)
+    double vbe_on = ui->VEBOn_lineEdit->text().toDouble(&ok);
+    if (ok) m_bjt->setParameter("Vbe_on", vbe_on);
+
+    // 4. 讀取 Early Voltage (Va)
     double va = ui->VA_lineEdit->text().toDouble(&ok);
     if (ok) m_bjt->setParameter("Va", va);
 
-    // 讀取最大電流 (Ic_max) - 單位換算：mA 轉 A
+    // 5. 讀取最大電流 (Ic_max) - 單位換算：mA 轉 A
     double icMax = ui->IC_max_ineEdit->text().toDouble(&ok) / 1000.0;
     if (ok) m_bjt->setParameter("Ic_max", icMax);
 
-    // 讀取最大電壓 (Vce_max)
-    double vceMax = ui->Vce_max_ineEdit_2->text().toDouble(&ok);
+    // 6. 讀取最大電壓 (Vce_max)
+    double vceMax = ui->Vce_max_lineEdit->text().toDouble(&ok);
     if (ok) m_bjt->setParameter("Vce_max", vceMax);
 
-    // 讀取飽和電壓 (Vce_sat)
+    // 7. 讀取飽和電壓 (Vce_sat)
     double vceSat = ui->VCEsat_lineEdit->text().toDouble(&ok);
     if (ok) m_bjt->setParameter("Vce_sat", vceSat);
 }
@@ -779,7 +812,19 @@ void MOSandBJT::paintEvent(QPaintEvent *event)
 }
 */
 void MOSandBJT::plotBjtCurves() {
-    if (!m_plotWidget) return;
+
+    qDebug() << "=== plotBjtCurves called ===";
+    qDebug() << "m_plotWidget ==" << m_plotWidget;
+    qDebug() << "ui->BJTPlot_widget ==" << ui->BJTPlot_widget;
+
+    m_plotWidget = ui->BJTPlot_widget;
+
+
+    if (!m_plotWidget) {
+        qDebug() << "ERROR: m_plotWidget is NULL!";
+
+        return;
+    }
     clearPlot();
 
     PlotAxisSettings settings;
@@ -972,7 +1017,7 @@ void MOSandBJT::on_mosfetParameter_changed()
     if (okVth) {
         if (okRds) {
             // 單位換算：mOhm 轉成 Ohm
-            double rds_mOhm = rds_Ohm/1000;
+            //double rds_mOhm = rds_Ohm/1000;
 
             // 呼叫你已經寫在 MOSFET 裡的演算法
             double calculatedKn = m_mosfet->calculateKnFromRds(rds_Ohm, vgs_test, vth);

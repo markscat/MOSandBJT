@@ -3,6 +3,8 @@
 #include "../include/bjt.h"
 #include <cmath>
 #include <algorithm>
+#include <QDebug>
+
 
 // 建構子：設定預設值
 BJT::BJT()
@@ -16,6 +18,10 @@ BJT::BJT()
     , m_isNPN(true)
     , m_curvePoints(1000)
 {
+    // 初始化 Beta Table（典型值）
+    m_betaTable[0] = {0.01, 80.0};   // Ic < 10mA, hFE=80
+    m_betaTable[1] = {0.05, 100.0};  // Ic < 50mA, hFE=100
+    m_betaTable[2] = {0.10, 70.0};   // Ic < 100mA, hFE=70
 }
 
 BJT::~BJT()
@@ -88,9 +94,30 @@ bool BJT::validateParameters(std::string& errorMsg) const
 // 內部計算函式
 double BJT::calculateVce_saturation(double Ib) const
 {
-    // 飽和區起始電壓，簡單用 Vce_sat 就好
+    if (Ib <= 0) return 0;
+
+    // 估算在飽和區邊緣的 Ic
+    double Ic_sat_edge = m_Beta * Ib;
+
+    // 如果 Ic 超過 Ic_max，飽和電壓會增加
+    if (Ic_sat_edge > m_Ic_max) {
+        return m_Vce_sat * (Ic_sat_edge / m_Ic_max);
+    }
+
     return m_Vce_sat;
 }
+
+/* 主動區電流計算
+ * Ic = Beta × Ib × (1 + Vce / Va)
+ * 這裡的 Vce 是絕對值，因為主動區的公式是基於電流增益隨 Vce 變化的關係
+ * 但實際上，Vce 的極性會影響電流的方向，所以在外部呼叫時要確保傳入正確的 Vce 值
+ * @param Ib 基極電流（已經處理極性，為正值）
+ * @param Vce 集極-射極電壓（已經處理極性，為正值）
+ * @return 主動區的集極電流
+ * @note 這裡假設輸入的 Ib 和 Vce 已經是正的，外部呼叫時要確保這一點
+ * @note 如果 Vce 為負，主動區公式不適用，應該回傳 0 或者處理為飽和區
+ * 
+ */
 
 double BJT::calculateIc_active(double Ib, double Vce) const
 {
@@ -105,12 +132,28 @@ double BJT::calculateIc_active(double Ib, double Vce) const
 
 
     // 1. 取得動態 Beta（傳入 Vce_abs 確保查找正確）
-    double dynamicBeta = getDynamicBeta(effectiveIb * m_Beta, effectiveVce);
+    //double dynamicBeta = getDynamicBeta(effectiveIb * m_Beta, effectiveVce);
+
+    double dynamicBeta = selectBeta(effectiveIb * m_Beta);
+
+
+    // 加入除錯
+    static bool once = true;
+    if (once) {
+        qDebug() << "=== BJT Debug ===";
+        qDebug() << "m_Beta:" << m_Beta;
+        qDebug() << "m_betaTable[0].ic:" << m_betaTable[0].icmax << "hFE:" << m_betaTable[0].hFE_DC;
+        qDebug() << "m_betaTable[1].ic:" << m_betaTable[1].icmax << "hFE:" << m_betaTable[1].hFE_DC;
+        qDebug() << "m_betaTable[2].ic:" << m_betaTable[2].icmax << "hFE:" << m_betaTable[2].hFE_DC;
+        qDebug() << "effectiveIb:" << effectiveIb;
+        qDebug() << "dynamicBeta:" << dynamicBeta;
+        once = false;
+    }
+
+
 
     // 2. 物理公式計算 (Ic = Beta * Ib * (1 + Vce/Va))
     double Ic = dynamicBeta * effectiveIb * (1.0 + effectiveVce / m_Va);
-
-
 
     // 限制電流大小
     if (Ic > m_Ic_max) {
@@ -195,7 +238,43 @@ double BJT::calculateVbeFromIb(double Ib) const
     }
 }
 
+double BJT::calculateIc_saturation(double Ib, double Vce) const
+{
+    if (Ib <= 0.0 || Vce < 0.0) {
+        return 0.0;
+    }
 
+    double Ic;
+
+    if (Vce >= m_Vce_sat) {
+        // 使用主動區公式，確保連續
+        double dynamicBeta = selectBeta(Ib * m_Beta);
+        Ic = dynamicBeta * Ib * (1.0 + Vce / m_Va);
+    } else {
+        // 使用與主動區相同的 dynamicBeta
+        double dynamicBeta = selectBeta(Ib * m_Beta);
+        double Ic_active_at_sat = dynamicBeta * Ib * (1.0 + m_Vce_sat / m_Va);
+
+        double Ic_linear;
+        if (m_Vce_sat > 0) {
+            Ic_linear = Ic_active_at_sat * (Vce / m_Vce_sat);
+        } else {
+            throw std::runtime_error("BJT 參數錯誤：Vce_sat 必須大於 0");
+        }
+
+        Ic = (Ic_linear < Ic_active_at_sat) ? Ic_linear : Ic_active_at_sat;
+    }
+
+    if (Ic > m_Ic_max) {
+        Ic = m_Ic_max;
+    }
+
+    return Ic;
+}
+
+
+
+/*
 double BJT::calculateIc_saturation(double Ib, double Vce) const
 {
     // 處理極性
@@ -215,12 +294,19 @@ double BJT::calculateIc_saturation(double Ib, double Vce) const
         return 0.0;
     }
 
+
+    // 計算主動區在飽和邊緣的電流值
+    double Ic_active_at_sat = m_Beta * effectiveIb * (1.0 + m_Vce_sat / m_Va);
+
     double Ic;
 
     if (effectiveVce >= m_Vce_sat) {
         // 如果 Vce 大於等於 Vce_sat，其實是在主動區邊界
         // 但為了連續性，用主動區公式
         Ic = m_Beta * effectiveIb * (1.0 + effectiveVce / m_Va);
+    }else if (m_Vce_sat > 0) {
+        // 線性內插，確保在 Vce = m_Vce_sat 時 Ic = Ic_active_at_sat
+        Ic = Ic_active_at_sat * (effectiveVce / m_Vce_sat);
     } else {
         // 飽和區：考慮兩個效應
         // 1. Vce 很小時，Ic 與 Vce 成正比
@@ -231,11 +317,16 @@ double BJT::calculateIc_saturation(double Ib, double Vce) const
         //double Ic_linear = Ic_active_at_sat * (effectiveVce / m_Vce_sat);
 
         double Ic_linear;
+
         if(m_Vce_sat > 0){
             Ic_linear=Ic_active_at_sat * (effectiveVce / m_Vce_sat);
         }else{
             throw std::runtime_error("BJT 參數錯誤：Vce_sat 必須大於 0");
         }
+
+
+        // 限制電流
+        if (Ic > m_Ic_max) Ic = m_Ic_max;
 
         // 取最小值（因為飽和區電流不會超過主動區邊界值）
         Ic = (Ic_linear < Ic_active_at_sat) ? Ic_linear : Ic_active_at_sat;
@@ -252,7 +343,7 @@ double BJT::calculateIc_saturation(double Ib, double Vce) const
     } else {
         return -Ic;
     }
-}
+}*/
 
 
 
@@ -266,10 +357,12 @@ std::vector<Point> BJT::outputCurve(double Ib) const
     // 處理 PNP 的極性
     double effectiveIb = std::abs(Ib);
     double effectiveVce_max = std::abs(m_Vce_max);
-
-
-
     double Vce_sat = calculateVce_saturation(effectiveIb);
+
+
+    qDebug() << "=== outputCurve ===";
+    qDebug() << "Ib:" << Ib << "effectiveIb:" << effectiveIb;
+    qDebug() << "Vce_sat:" << Vce_sat;
 
     for (int i = 0; i <= m_curvePoints; i++) {
         double progress = i / (double)m_curvePoints;
@@ -282,9 +375,13 @@ std::vector<Point> BJT::outputCurve(double Ib) const
         if (absVce < Vce_sat) {
             // 飽和區（用絕對值計算）
             Ic = calculateIc_saturation(effectiveIb, absVce);
+            qDebug() << "Sat: Vce=" << Vce << "Ic=" << Ic;
+
         } else {
             // 主動區（用絕對值計算）
             Ic = calculateIc_active(effectiveIb, absVce);
+            qDebug() << "Act: Vce=" << Vce << "Ic=" << Ic;
+
         }
 
         // 根據極性調整 Ic 的符號
@@ -826,9 +923,40 @@ double BJT::findVceFromIc(double Ic, double Ib) const
 }
 
 
+double BJT::selectBeta(double estimatedIc) const {
+    double absIc = std::abs(estimatedIc);
 
-// bjt.cpp
+    // 假設規格書提供三種 Ic 下的 hFE：
+    // 1. 小電流 (例如 < 10mA)
+    // 2. 中電流 (例如 10mA ~ 100mA)
+    // 3. 大電流 (例如 > 100mA)
 
+    if (absIc < m_betaTable[0].icmax) {
+        return m_betaTable[0].hFE_DC;
+    } else if (absIc < m_betaTable[1].icmax) {
+        return m_betaTable[1].hFE_DC;
+    } else {
+        return m_betaTable[2].hFE_DC;
+    }
+}
+
+void BJT::setBetaPoints(double ic1, double hfe1,
+                        double ic2, double hfe2,
+                        double ic3, double hfe3)
+{
+    m_betaTable[0] = {ic1, hfe1};
+    m_betaTable[1] = {ic2, hfe2};
+    m_betaTable[2] = {ic3, hfe3};
+
+    // 可選：將中間點的 hFE 設為預設 Beta
+    m_Beta = hfe2;
+}
+
+/*備用,用來計算動態hfe_ac的函數*/
+double BJT::getDynamicBeta(double currentIc, double currentVce) const {
+    return 0;
+}
+/*
 double BJT::getDynamicBeta(double currentIc, double currentVce) const {
     if (m_dataCount < 3) return m_Beta;
 
@@ -883,7 +1011,7 @@ double BJT::getDynamicBeta(double currentIc, double currentVce) const {
 
     return dynamicBeta;
 }
-
+*/
 std::vector<Point> BJT::generateCurve(double inputParam) const
 {
     // 直接呼叫 BJT 自己的 outputCurve

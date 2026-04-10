@@ -31,6 +31,12 @@ struct BetaDataPoint {
     double Vce;
 };
 
+struct BetaPoint{
+    double icmax;  // 該區間的最大電流
+    double hFE_DC;    // 該區間建議使用的 Beta
+};
+
+
 
 class BJT : public Transistor,public CurveDrawable
 {
@@ -49,19 +55,25 @@ public:
 
     // 型號與類型
 
-    std::string type() const override;  // "BJT"
-	/**@brief 回傳 BJT 的子類型
-	* @return std::string "NPN" 或 "PNP"
-    * 
-	* @details 回傳 BJT 的子類型，根據內部的 m_isNPN 變數決定回傳 "NPN" 或 "PNP"
+    /** 
+	  * string type() const override;
+      * @brief 回傳元件類型
+      * @return std::string "BJT"
+      * @details 回傳元件類型，固定為 "BJT"
+      * @note 這個方法是 Transistor 類別的純虛擬方法，BJT 類別必須實作它以回傳正確的類型資訊。
+      * @note BJT 類別還有一個 subtype() 方法，可以回傳 NPN 或 PNP 的子類型資訊。
+      * @note 這個方法在使用者界面或其他需要識別元件類型的地方非常重要，可以幫助區分不同類型的晶體管（例如 BJT 和 MOSFET）。
+	  * @note 這個方法不接受任何參數，直接回傳固定的字串 "BJT"，表示這是一個雙極性接面晶體管。
     */
+    std::string type() const override;  // "BJT"
+
 
     /**@brief 回傳 BJT 的子類型
-* @return std::string "NPN" 或 "PNP"
-*
-* @details 根據內部的 m_isNPN 變數決定回傳 "NPN" 或 "PNP"
-* @note 這個方法是 BJT 類別特有的方法，用於區分 NPN 和 PNP 兩種基本的 BJT 類型。NPN 和 PNP 的電流方向和偏壓條件不同，因此在模擬和分析電路時需要知道具體的子類型。
-*/
+      * @return std::string "NPN" 或 "PNP"
+      *
+      * @details 根據內部的 m_isNPN 變數決定回傳 "NPN" 或 "PNP"
+      * @note 這個方法是 BJT 類別特有的方法，用於區分 NPN 和 PNP 兩種基本的 BJT 類型。NPN 和 PNP 的電流方向和偏壓條件不同，因此在模擬和分析電路時需要知道具體的子類型。
+    */
     std::string subtype() const;        // NPN 或 PNP
 
 
@@ -95,6 +107,11 @@ public:
     * 
     */
     std::vector<std::string> paramList() const override;
+
+    void setBetaPoints(double ic1, double hfe1,
+                       double ic2, double hfe2,
+                       double ic3, double hfe3);
+
 
     // 參數驗證
     /**
@@ -216,10 +233,29 @@ public:
 
 
     // 新增：從 CurveDrawable 繼承來的函式
+    /**
+    * @brief generateCurve(double inputParam) const override;
+    * @brief 生成特性曲線
+    * @param inputParam 輸入參數
+    * @return std::vector<Point> 包含特性曲線點的列表
+    * @details 這個方法用於生成特性曲線，根據給定的輸入參數計算對應的特性曲線點，返回一個包含 Point 結構的列表。
+    */
     std::vector<Point> generateCurve(double inputParam) const override;
 
+    /**
+    * @brief deviceType() const override;
+    * @brief 取得元件類型
+    * @return QString 元件類型名稱
+    * @details 這個方法用於取得 BJT 的元件類型名稱，例如 "NPN" 或 "PNP"。
+    */
     QString deviceType() const override;
 
+    /**
+    * @brief inputUnit() const override;
+    * @brief 取得輸入單位
+    * @return QString 輸入單位名稱
+    * @details 這個方法用於取得 BJT 的輸入單位名稱，例如 "A" 或 "V"。
+    */
     QString inputUnit() const override;
 
 
@@ -245,6 +281,15 @@ private:
     double m_Ic_max;     // 最大集極電流 (A)
     double m_Vce_max;    // 最大集極-射極電壓 (V)
 
+    static constexpr int BETA_POINTS = 3;
+    BetaPoint m_betaPoints[BETA_POINTS];  // 改名
+
+    // 或保留 m_betaTable 但型別是 BetaPoint
+    BetaPoint m_betaTable[BETA_POINTS];
+
+    int m_dataCount = 0;           // 記錄到底填了幾組
+
+
     /**
 	* @brief BJT 的子類型
 	* @Param m_isNPN 布林值，true 表示 NPN 型 BJT，false 表示 PNP 型 BJT
@@ -257,8 +302,6 @@ private:
     int m_curvePoints;   // 曲線取點數量
 
 
-    BetaDataPoint m_betaPoints[3]; // 直接開 3 個陣列存你 UI 那三組
-    int m_dataCount = 0;           // 記錄到底填了幾組
 
     // 內部計算函式
 	/**@brief calculateIc_active(double Ib, double Vce) const;
@@ -312,14 +355,64 @@ private:
     */
     double calculateVbeFromIb(double Ib) const;               // 從 Ib 算 Vbe
 
-
+    /**
+	* @brief calculateQPoint_FixedIb(double Vcc, double Rc, double Ib) const;
+	* @brief 計算固定 Ib 的工作點
+	* @param Vcc 電源電壓
+	* @param Rc 集極電阻
+	* @param Ib 基極電流
+    * @return BiasPoint 對應的工作點
+    * @details 這個方法用於計算固定基極電流 Ib 的工作點，根據給定的電源電壓 Vcc 和集極電阻 Rc 計算對應的集極電流 Ic 和集極-射極電壓 Vce，從而確定 BJT 的工作點。
+    */
     BiasPoint calculateQPoint_FixedIb(double Vcc, double Rc, double Ib) const;
 
+    /**
+	* @brief calculateQPoint_VoltageDivider(double Vcc, double Rc, double Re, double R1, double R2) const;
+	* @brief 計算電壓分壓偏置的工作點
+    * @param Vcc 電源電壓
+    * @param Rc 集極電阻
+    * @param Re 射極電阻
+    * @param R1 分壓電阻 R1
+    * @param R2 分壓電阻 R2
+    * @return BiasPoint 對應的工作點
+    * @details 這個方法用於計算電壓分壓偏置的工作點，根據給定的電源電壓 Vcc、集極電阻 Rc、射極電阻 Re 以及分壓電阻 R1 和 R2 計算對應的集極電流 Ic 和集極-射極電壓 Vce，從而確定 BJT 的工作點。
+    * 
+    */
     BiasPoint calculateQPoint_VoltageDivider(double Vcc, double Rc, double Re, double R1, double R2) const;
 
+    /**
+    * @brief calculateQPoint_FourResistor(double Vcc, double Rc, double Re, double R1, double R2) const;
+    * @brief 計算四電阻偏置的工作點
+    * @param Vcc 電源電壓
+    * @param Rc 集極電阻
+    * @param Re 射極電阻
+    * @param R1 分壓電阻 R1
+    * @param R2 分壓電阻 R2
+    * @return BiasPoint 對應的工作點
+    * @details 這個方法用於計算四電阻偏置的工作點，根據給定的電源電壓 Vcc、集極電阻 Rc、射極電阻 Re 以及分壓電阻 R1 和 R2 計算對應的集極電流 Ic 和集極-射極電壓 Vce，從而確定 BJT 的工作點。
+    */
     BiasPoint calculateQPoint_FourResistor(double Vcc, double Rc, double Re, double R1, double R2) const;
 
+    /**
+    * @brief getDynamicBeta(double currentIc, double currentVce) const;
+    * @brief 計算動態電流增益
+    * @param currentIc 當前集極電流
+    * @param currentVce 當前集極-射極電壓
+    * @return double 對應的動態電流增益值
+    * @details 這個方法用於計算 BJT 在特定工作點下的動態電流增益，根據給定的集極電流 Ic 和集極-射極電壓 Vce 計算對應的動態電流增益值。
+    */
     double getDynamicBeta(double currentIc, double currentVce) const;
+
+
+    /**
+    * @brief selectBeta(double estimatedIc) const;
+    * @brief 根據估計的 Ic 選擇合適的 Beta 值 (三選一)
+    * @param estimatedIc 估計的集極電流
+    * @return 該區間對應的 hFE
+    * @details 這個方法用於根據估計的集極電流 Ic 選擇合適的 Beta 值，根據不同的 Ic 區間返回對應的 hFE 值。
+    */
+    double selectBeta(double estimatedIc) const;
+
 
 };
 
