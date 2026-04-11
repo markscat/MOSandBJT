@@ -81,18 +81,25 @@ MOSandBJT::MOSandBJT(QWidget *parent)
                          "1. 確認你的電晶體符合上述類型\n"
                          "2. 輸入合理的參數（可參考規格書）\n"
                          "3. 自行驗證計算結果\n"
-                         "4. P-ch晶體，請依照規格書中的數值，自行轉換成絕對值，否則會跳出錯誤"
+                         "4. 不要用這個程式\n"
+                         "P-ch或是pnp電晶體，可依照規格書中的數值輸入,忘記輸入負號沒關係,輸入的數值都會經過絕對值計算"
                          "亂玩參數導致結果不準，恕不負責。\n"
                          "點擊「OK」即表示你同意上述聲明。\n\n"
-                         "Important Notice - Must Read\n\n"
-                         "This program uses a simplified physical model and is only applicable to\n"
-                         "Traditional silicon-based MOSFETs and BJTs.\n"
-                         "To obtain accurate results, please:\n\n"
-                         "1. Confirm that your transistor conforms to the above type.\n"
-                         "2. Enter reasonable parameters (refer to the datasheet).\n"
-                         "3. Verify the calculation results yourself.\n"
-                         "We are not responsible for inaccurate results caused by arbitrarily adjusting parameters.\n"
-                         "[I agree, start using]\n",
+                         "This program uses a simplified physical model to calculate transistor \n"
+                         "characteristic curves. All parameters are taken from the device datasheet.\n\n"
+                         "Due to process variations, temperature effects, parasitic parameters and other\n"
+                         "factors in actual devices, the calculation results are for reference only.\n"
+                         "This program is only applicable to traditional silicon-based MOSFET and BJT.\n\n"
+                         "For accurate values, please:\n\n"
+                         "1. Confirm that your transistor matches the types mentioned above\n"
+                         "2. Enter reasonable parameters (refer to the datasheet if needed)\n"
+                         "3. Verify the calculation results yourself\n"
+                         "4. Do not use this program\n"
+                         "For P-ch or PNP transistors, you may enter the values according to the datasheet. \n"
+                         "It doesn't matter if you forget the negative sign, \n"
+                         "all input values will be processed with absolute value.\n"
+                         "We are not responsible for inaccurate results caused by playing around with parameters.\n"
+                          "Clicking \"OK\" means you agree with the above statement.\n\n",
                         QMessageBox::Yes | QMessageBox::No);
 
     if (reply == QMessageBox::No) {
@@ -722,7 +729,6 @@ void MOSandBJT::plotMosfetCurves()
     //座標軸設定
     settings= getPlotConfig();
 
-
     // --- 將資料同步傳送到 PlotCanvas 畫布 ---
     // 透過 qobject_cast 找到我們提升過的自定義畫布
     PlotCanvas *canvas = qobject_cast<PlotCanvas*>(m_plotWidget);
@@ -735,94 +741,12 @@ void MOSandBJT::plotMosfetCurves()
     // 觸發重繪
     m_plotWidget->update();
 }
-/*
-void MOSandBJT::paintEvent(QPaintEvent *event)
-{
-    qDebug() << "MOSandBJT::paintEvent called";  // ← 加這行
 
-
-    QMainWindow::paintEvent(event);
-
-    if (!m_plotWidget) return;
-
-    QPainter painter(m_plotWidget);
-    painter.setRenderHint(QPainter::Antialiasing);
-
-    QRect rect = m_plotWidget->rect();
-    int margin = 50;
-    QRect plotRect = rect.adjusted(margin, margin, -margin, -margin);
-
-    // 繪製背景
-    painter.fillRect(plotRect, Qt::white);
-
-    // 繪製座標軸
-    painter.setPen(Qt::black);
-    painter.drawLine(plotRect.bottomLeft(), plotRect.bottomRight());
-    painter.drawLine(plotRect.bottomLeft(), plotRect.topLeft());
-
-    // 繪製刻度標記
-    painter.setPen(Qt::gray);
-    for (int i = 1; i <= 5; ++i) {
-        int x = plotRect.left() + i * plotRect.width() / 5;
-        painter.drawLine(x, plotRect.bottom(), x, plotRect.bottom() - 5);
-
-        int y = plotRect.top() + i * plotRect.height() / 5;
-        painter.drawLine(plotRect.left(), y, plotRect.left() + 5, y);
-    }
-
-    // 繪製 X 軸標籤
-    painter.setPen(Qt::black);
-    painter.drawText(plotRect.center().x() - 20, rect.bottom() - 10, m_xLabel);
-
-    // 繪製 Y 軸標籤
-    painter.save();
-    painter.translate(15, plotRect.center().y());
-    painter.rotate(-90);
-    painter.drawText(0, 0, m_yLabel);
-    painter.restore();
-
-    // 繪製曲線
-    if (!m_curveData.isEmpty()) {
-        QPen pen(m_curveColor);
-        pen.setWidth(m_curveWidth);
-        painter.setPen(pen);
-
-        for (const auto& curve : std::as_const(m_curveData)) {
-            QPainterPath path;
-            bool first = true;
-
-            for (const auto& point : std::as_const(curve.points)) {
-                double x = qBound(m_xMin, point.x(), m_xMax);
-                double y = qBound(m_yMin, point.y(), m_yMax);
-
-                int px = plotRect.left() + (x - m_xMin) / (m_xMax - m_xMin) * plotRect.width();
-                int py = plotRect.bottom() - (y - m_yMin) / (m_yMax - m_yMin) * plotRect.height();
-
-                if (first) {
-                    path.moveTo(px, py);
-                    first = false;
-                } else {
-                    path.lineTo(px, py);
-                }
-            }
-
-            painter.drawPath(path);
-        }
-    }
-}
-*/
 void MOSandBJT::plotBjtCurves() {
-
-    qDebug() << "=== plotBjtCurves called ===";
-    qDebug() << "m_plotWidget ==" << m_plotWidget;
-    qDebug() << "ui->BJTPlot_widget ==" << ui->BJTPlot_widget;
 
     m_plotWidget = ui->BJTPlot_widget;
 
-
     if (!m_plotWidget) {
-        qDebug() << "ERROR: m_plotWidget is NULL!";
-
         return;
     }
     clearPlot();
@@ -849,7 +773,7 @@ void MOSandBJT::plotBjtCurves() {
         settings.yUnit  = "A";
     }
     else if (ui->BJT_OutOrtran_comboBox->currentIndex() == 2) { // 轉移特性 (Ic vs Ib)
-        double testVce = 5.0; // 固定測試電壓
+        double testVce = 10.0; // 固定測試電壓
         double maxIb = (icMax / beta) * 1.5; // 掃描到 Ic_max 的 1.5 倍範圍
 
         std::vector<Point> points = m_bjt->transferCurve(testVce, 0.0, maxIb);
@@ -861,6 +785,23 @@ void MOSandBJT::plotBjtCurves() {
         settings.xLabel = "Ib";
         settings.yLabel = "Ic";
         settings.xUnit  = "A";
+        settings.yUnit  = "A";
+
+    }else{// --- 輸入特性 (Ib vs Vbe) ---
+        std::vector<Point> points = m_bjt->inputCurve();
+        m_curveData.append(UICurveData(toQtPoints(points), "Input"));
+
+        m_xMin = 0; m_xMax = 1.0; // Vbe 通常掃描到 1V 就夠了
+        m_yMin = 0;
+
+        // 自動抓取數據中的最大 Ib 作為 Y 軸上限
+        double maxIb = 0;
+        for(const auto& p : points) if(p.y > maxIb) maxIb = p.y;
+        m_yMax = maxIb * 1.1;
+
+        settings.xLabel = "Vbe";
+        settings.yLabel = "Ib";
+        settings.xUnit  = "V";
         settings.yUnit  = "A";
     }
 
@@ -960,7 +901,30 @@ QString MOSandBJT::formatWorkPoint(double value, const QString& unit) const
         return QString("%1 %2").arg(value, 0, 'f', 3).arg(unit);
     }
 }
+#ifdef modeGeneric
+// 在 mosandbjt.cpp 中
+PlotAxisSettings MOSandBJT::getPlotConfig() const
+{
+    PlotAxisSettings s;
+    int mode = ui->BJT_OutOrtran_comboBox->currentIndex();
 
+    if (mode == 1) { // BJT 輸入特性
+        s.xLabel = "Vbe"; s.xUnit = "V"; s.xScale = 1.0; s.xDispUnit = "V"; s.xPrec = 2;
+        s.yLabel = "Ib";  s.yUnit = "A"; s.yScale = 1e6; s.yDispUnit = "uA"; s.yPrec = 2;
+    }
+    else if (mode == 2) { // BJT 轉移特性
+        s.xLabel = "Ib";  s.xUnit = "A"; s.xScale = 1e6; s.xDispUnit = "uA"; s.xPrec = 2;
+        s.yLabel = "Ic";  s.yUnit = "A"; s.yScale = 1e3; s.yDispUnit = "mA"; s.yPrec = 2;
+    }
+    // 如果是電阻和無單位狀況
+    /* else if (其他特殊狀況 ) {
+        s.xLabel = "R_load"; s.xUnit = "Ohm"; s.xScale = 1.0; s.xDispUnit = "Ohm";
+        s.yLabel = "Factor"; s.yUnit = "";    s.yScale = 1.0; s.yDispUnit = "";
+    }*/
+
+    return s;
+}
+#else
 PlotAxisSettings MOSandBJT::getPlotConfig() const
 {
     PlotAxisSettings s; // 建立一個空的設定
@@ -1003,6 +967,7 @@ PlotAxisSettings MOSandBJT::getPlotConfig() const
 
     return s;
 }
+#endif
 
 void MOSandBJT::on_mosfetParameter_changed()
 {

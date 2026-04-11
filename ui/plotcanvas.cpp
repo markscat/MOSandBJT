@@ -105,6 +105,7 @@ void PlotCanvas::leaveEvent(QEvent *event)
     m_showHint = false;
     update();
 }
+
 #ifdef Lone_Version
 
 void PlotCanvas::paintEvent(QPaintEvent *event)
@@ -389,18 +390,45 @@ void PlotCanvas::drawGridAndAxes(QPainter &painter)
 void PlotCanvas::drawHintBox(QPainter &painter)
 {
     // 1. 從目前的滑鼠位置反推物理數值
-    double vVal = pxToValX(m_mousePos.x());
-    double iVal = pxToValY(m_mousePos.y());
+    double xVal = pxToValX(m_mousePos.x());
+    double yVal = pxToValY(m_mousePos.y());
 
-    // 2. 準備文字內容
-    QString text = QString("V: %1 V\nI: %2 A")
-                       .arg(vVal, 0, 'f', 2)
-                       .arg(iVal, 0, 'f', 3);
+
+    QString xText, yText;
+
+
+    // 2. 針對 X 軸的顯示邏輯
+    if (m_settings.xLabel == "Ib") {
+        // 只有在 BJT 轉移特性（Ib）時，轉換為 uA
+        xText = QString("%1: %2 uA").arg(m_settings.xLabel).arg(xVal * 1e6, 0, 'f', 4);
+    } else if (m_settings.xUnit == "A") {
+        // 其他電流軸（如果有），顯示 A 並增加精度
+        xText = QString("%1: %2 mA").arg(m_settings.xLabel).arg(xVal * 1e3, 0, 'f', 2);
+    } else {
+        // 電壓軸（Vds, Vgs, Vce），維持原本的 V 顯示
+        xText = QString("%1: %2 V").arg(m_settings.xLabel).arg(xVal, 0, 'f', 2);
+    }
+
+    // 3. 針對 Y 軸的顯示邏輯 (Ic 或 Id)
+
+    if (m_settings.yLabel == "Ib") {
+        // 輸入特性時 Ib 在 Y 軸，轉為 uA
+        yText = QString("%1: %2 uA").arg(m_settings.yLabel).arg(yVal * 1e6, 0, 'f', 4);
+    }else if (m_settings.yLabel == "Ic" || m_settings.yLabel == "Id") {
+        // 偵測到是集極或汲極電流，轉換為 mA
+        yText = QString("%1: %2 mA").arg(m_settings.yLabel).arg(yVal * 1e3, 0, 'f', 2);
+    } else {
+        // 其他情況（維持原樣）
+        yText = QString("%1: %2 %3").arg(m_settings.yLabel).arg(yVal, 0, 'f', 2).arg(m_settings.yUnit);
+    }
+
+    QString fullText = xText + "\n" + yText;
+
 
     // 3. 設定框框的位置 (固定在繪圖區左下角)
     // 為了美觀，我們把它畫在 plotBottom 之上 60 像素的位置
-    int boxW = 120;
-    int boxH = 50;
+    int boxW = 140;// 稍微加寬，因為 Ib 的數字比較長
+    int boxH = 55;
     int boxX = m_marginLeft + 10;
     int boxY = height() - m_marginBottom - boxH - 10;
     QRect boxRect(boxX, boxY, boxW, boxH);
@@ -411,6 +439,40 @@ void PlotCanvas::drawHintBox(QPainter &painter)
     painter.drawRoundedRect(boxRect, 5, 5);
 
     // 5. 畫文字 (白色)
+    painter.setPen(Qt::white);
+    painter.drawText(boxRect.adjusted(10, 5, -10, -5), Qt::AlignLeft | Qt::AlignVCenter, fullText);
+}
+
+void PlotCanvas::drawHintBoxGeneric(QPainter &painter)
+{
+    // 1. 取得數值
+    double xVal = pxToValX(m_mousePos.x());
+    double yVal = pxToValY(m_mousePos.y());
+
+    // 2. 依照 Settings 傳進來的指示進行格式化（完全不依賴 Label 字串）
+    QString xText = QString("%1: %2 %3")
+                        .arg(m_settings.xLabel)
+                        .arg(xVal * m_settings.xScale, 0, 'f', m_settings.xPrec)
+                        .arg(m_settings.xDispUnit.isEmpty() ? m_settings.xUnit : m_settings.xDispUnit);
+
+    QString yText = QString("%1: %2 %3")
+                        .arg(m_settings.yLabel)
+                        .arg(yVal * m_settings.yScale, 0, 'f', m_settings.yPrec)
+                        .arg(m_settings.yDispUnit.isEmpty() ? m_settings.yUnit : m_settings.yDispUnit);
+
+    QString text = xText + "\n" + yText;
+
+    // 3. 繪製框框 (維持原本變數名稱與 UI 風格)
+    int boxW = 150;
+    int boxH = 55;
+    int boxX = m_marginLeft + 10;
+    int boxY = height() - m_marginBottom - boxH - 10;
+    QRect boxRect(boxX, boxY, boxW, boxH);
+
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(0, 0, 0, 160));
+    painter.drawRoundedRect(boxRect, 5, 5);
+
     painter.setPen(Qt::white);
     painter.drawText(boxRect.adjusted(10, 5, -10, -5), Qt::AlignLeft | Qt::AlignVCenter, text);
 }

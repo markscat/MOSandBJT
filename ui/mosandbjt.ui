@@ -994,6 +994,29 @@ border: 1px solid gray;</string>
      <attribute name="title">
       <string>MOS小訊號分析</string>
      </attribute>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>70</y>
+        <width>441</width>
+        <height>221</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>標楷體</family>
+        <pointsize>15</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>還沒想到該怎麼做，因為組態太多，
+感覺用Spice會比較快</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="tab_3">
      <attribute name="title">
@@ -1184,7 +1207,7 @@ border: 1px solid gray;</string>
         </rect>
        </property>
        <property name="text">
-        <string>Vce1</string>
+        <string>Vce2</string>
        </property>
       </widget>
       <widget class="QLineEdit" name="IC_Beta2_lineEdit">
@@ -1207,7 +1230,7 @@ border: 1px solid gray;</string>
         </rect>
        </property>
        <property name="text">
-        <string>hfe1</string>
+        <string>hfe2</string>
        </property>
       </widget>
       <widget class="QLineEdit" name="Beta2_lineEdit">
@@ -1250,7 +1273,7 @@ border: 1px solid gray;</string>
         </rect>
        </property>
        <property name="text">
-        <string>hfe1</string>
+        <string>hfe3</string>
        </property>
       </widget>
       <widget class="QLabel" name="label_58">
@@ -1263,7 +1286,7 @@ border: 1px solid gray;</string>
         </rect>
        </property>
        <property name="text">
-        <string>Ic1</string>
+        <string>Ic3</string>
        </property>
       </widget>
       <widget class="QLineEdit" name="VCE_Beta3_lineEdit">
@@ -1296,7 +1319,7 @@ border: 1px solid gray;</string>
         </rect>
        </property>
        <property name="text">
-        <string>Vce1</string>
+        <string>Vce3</string>
        </property>
       </widget>
       <widget class="QLabel" name="label_60">
@@ -1530,6 +1553,19 @@ border: 1px solid gray;</string>
         <string>Collector-Emitter Open</string>
        </property>
       </widget>
+      <widget class="QLabel" name="label_92">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>10</y>
+         <width>31</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>V</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QFrame" name="VEBO_frame">
       <property name="geometry">
@@ -1595,6 +1631,19 @@ border: 1px solid gray;</string>
         <string>Emitter-Base Open</string>
        </property>
       </widget>
+      <widget class="QLabel" name="label_90">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>10</y>
+         <width>31</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>V</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QFrame" name="IC_Max_frame">
       <property name="geometry">
@@ -1658,6 +1707,19 @@ border: 1px solid gray;</string>
        </property>
        <property name="text">
         <string>最大IC連續電流</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_89">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>10</y>
+         <width>31</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>mA</string>
        </property>
       </widget>
      </widget>
@@ -1731,6 +1793,19 @@ border: 1px solid gray;</string>
         <bool>true</bool>
        </property>
       </widget>
+      <widget class="QLabel" name="label_93">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>10</y>
+         <width>31</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>V</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QFrame" name="Pd_Max_frame">
       <property name="geometry">
@@ -1796,6 +1871,19 @@ border: 1px solid gray;</string>
         <string>Power Dissipation</string>
        </property>
       </widget>
+      <widget class="QLabel" name="label_94">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>10</y>
+         <width>31</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>W</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QFrame" name="Vce_Max_frame">
       <property name="geometry">
@@ -1859,6 +1947,19 @@ border: 1px solid gray;</string>
        </property>
        <property name="text">
         <string>最大Vce連續電壓</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_95">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>10</y>
+         <width>31</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>V</string>
        </property>
       </widget>
      </widget>
@@ -1978,6 +2079,19 @@ border: 1px solid gray;</string>
         <string>Emitter-Base Open</string>
        </property>
       </widget>
+      <widget class="QLabel" name="label_91">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>10</y>
+         <width>31</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>V</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QFrame" name="Va_frame">
       <property name="geometry">
@@ -2055,6 +2169,29 @@ border: 1px solid gray;</string>
      <attribute name="title">
       <string>BJT小訊號分析</string>
      </attribute>
+     <widget class="QLabel" name="label_2">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>30</y>
+        <width>441</width>
+        <height>221</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>標楷體</family>
+        <pointsize>15</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>還沒想到該怎麼做，因為組態太多，
+感覺用Spice會比較快</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+     </widget>
     </widget>
    </widget>
    <widget class="QPushButton" name="Input_pushButton">
@@ -2116,7 +2253,7 @@ border: 1px solid gray;</string>
      <x>0</x>
      <y>0</y>
      <width>1253</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFunction">

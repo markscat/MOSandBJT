@@ -23,6 +23,7 @@ class NumKeyBoard;
 class QCustomPlot;
 class QCPGraph;
 
+
 class MOSandBJT : public QMainWindow
 {
     Q_OBJECT

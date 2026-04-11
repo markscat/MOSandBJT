@@ -17,7 +17,17 @@ struct PlotAxisSettings {
     int yTicks = 5;      // Y 軸刻度數量
     int xPrecision = 1;  // X 軸小數點位數
     int yPrecision = 2;  // Y 軸小數點位數
+
+    // --- 新增通用參數 ---
+    double xScale = 1.0;        // 縮放倍率 (如 1e6)
+    double yScale = 1.0;        // 縮放倍率 (如 1000)
+    QString xDispUnit;          // 顯示單位 (如 uA)
+    QString yDispUnit;          // 顯示單位 (如 mA)
+    int xPrec = 2;              // 小數精度
+    int yPrec = 2;              // 小數精度
+
 };
+
 
 class PlotCanvas : public QWidget
 {
@@ -66,6 +76,7 @@ private:
     void drawHintBox(QPainter &painter);// 繪製左下角資訊框
     void drawCrosshair(QPainter &painter);   // 繪製 X-Y 輔助虛線 (核心需求)
 
+    void drawHintBoxGeneric(QPainter &painter);//繪製 X-Y 輔助虛線(通用型)
 
     // 核心數據
     std::vector<Point> m_curvePoints;
