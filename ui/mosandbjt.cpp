@@ -231,9 +231,6 @@ void MOSandBJT::setupUi()
     ui->plot_vScrollBar->setVisible(false);
     ui->plot_hScrollBar->setVisible(false);
 
-    // 設定 Id 標籤旋轉
-    //ui->Id_label->setProperty("rotation", -90);
-
     // 設定下拉選單
     ui->OutOrtran_comboBox->addItem("輸出特性");
     ui->OutOrtran_comboBox->addItem("轉移特性");
